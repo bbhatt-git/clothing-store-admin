@@ -5,11 +5,10 @@
  * WooCommerce Admin Dashboard API
  * OpenAPI spec version: 0.1.0
  */
+import type { WooTag } from './wooTag';
 
-export interface WooAttribute {
-  id?: number;
-  name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
+export interface TagsResponse {
+  tags: WooTag[];
+  total: number;
+  totalPages: number;
 }

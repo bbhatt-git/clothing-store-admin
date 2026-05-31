@@ -6,10 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
-  id?: number;
+export interface TagUpdate {
   name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
+  slug?: string;
+  description?: string;
 }

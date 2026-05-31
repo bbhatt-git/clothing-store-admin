@@ -9,6 +9,7 @@
 export interface OrderAddress {
   first_name?: string;
   last_name?: string;
+  company?: string;
   address_1?: string;
   address_2?: string;
   city?: string;

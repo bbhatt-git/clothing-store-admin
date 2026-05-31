@@ -6,10 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
+export type ProductInputTagsItem = {
   id?: number;
-  name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
-}
+};

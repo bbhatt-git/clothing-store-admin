@@ -83,6 +83,7 @@ export const GetSalesChartResponse = zod.array(GetSalesChartResponseItem)
  */
 export const GetRecentOrdersResponseItem = zod.object({
   "id": zod.number(),
+  "number": zod.string().optional(),
   "status": zod.string(),
   "total": zod.string(),
   "subtotal": zod.string().optional(),
@@ -93,9 +94,15 @@ export const GetRecentOrdersResponseItem = zod.object({
   "currency_symbol": zod.string().optional(),
   "date_created": zod.string().optional(),
   "date_modified": zod.string().optional(),
+  "customer_id": zod.number().optional(),
+  "customer_note": zod.string().nullish(),
+  "payment_method": zod.string().nullish(),
+  "payment_method_title": zod.string().nullish(),
+  "transaction_id": zod.string().nullish(),
   "billing": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -108,6 +115,7 @@ export const GetRecentOrdersResponseItem = zod.object({
   "shipping": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -121,8 +129,10 @@ export const GetRecentOrdersResponseItem = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "product_id": zod.number().optional(),
+  "variation_id": zod.number().optional(),
   "quantity": zod.number().optional(),
   "total": zod.string().optional(),
+  "subtotal": zod.string().optional(),
   "price": zod.number().optional(),
   "sku": zod.string().nullish(),
   "image": zod.object({
@@ -130,11 +140,32 @@ export const GetRecentOrdersResponseItem = zod.object({
   "src": zod.string().optional(),
   "name": zod.string().nullish(),
   "alt": zod.string().nullish()
-}).optional()
+}).optional(),
+  "meta_data": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "key": zod.string().optional(),
+  "value": zod.string().optional()
+})).optional()
 })).optional(),
-  "payment_method_title": zod.string().nullish(),
-  "customer_note": zod.string().nullish(),
-  "number": zod.string().optional()
+  "shipping_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "method_title": zod.string().optional(),
+  "method_id": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional(),
+  "coupon_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "code": zod.string().optional(),
+  "discount": zod.string().optional(),
+  "discount_tax": zod.string().optional()
+})).optional(),
+  "fee_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional()
 })
 export const GetRecentOrdersResponse = zod.array(GetRecentOrdersResponseItem)
 
@@ -161,6 +192,12 @@ export const GetLowStockProductsResponseItem = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "id": zod.number().optional(),
   "src": zod.string().optional(),
@@ -171,7 +208,8 @@ export const GetLowStockProductsResponseItem = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional(),
   "variations": zod.array(zod.number()).optional(),
   "date_created": zod.string().optional(),
@@ -212,6 +250,12 @@ export const ListProductsResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "id": zod.number().optional(),
   "src": zod.string().optional(),
@@ -222,7 +266,8 @@ export const ListProductsResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional(),
   "variations": zod.array(zod.number()).optional(),
   "date_created": zod.string().optional(),
@@ -251,6 +296,9 @@ export const CreateProductBody = zod.object({
   "categories": zod.array(zod.object({
   "id": zod.number().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "src": zod.string().optional(),
   "id": zod.number().optional()
@@ -259,7 +307,8 @@ export const CreateProductBody = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional()
 })
 
@@ -290,6 +339,12 @@ export const GetProductResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "id": zod.number().optional(),
   "src": zod.string().optional(),
@@ -300,7 +355,8 @@ export const GetProductResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional(),
   "variations": zod.array(zod.number()).optional(),
   "date_created": zod.string().optional(),
@@ -330,6 +386,9 @@ export const UpdateProductBody = zod.object({
   "categories": zod.array(zod.object({
   "id": zod.number().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "src": zod.string().optional(),
   "id": zod.number().optional()
@@ -338,7 +397,8 @@ export const UpdateProductBody = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional()
 })
 
@@ -361,6 +421,12 @@ export const UpdateProductResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional()
 })).optional(),
+  "tags": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})).optional(),
   "images": zod.array(zod.object({
   "id": zod.number().optional(),
   "src": zod.string().optional(),
@@ -371,7 +437,8 @@ export const UpdateProductResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "options": zod.array(zod.string()).optional(),
-  "variation": zod.boolean().optional()
+  "variation": zod.boolean().optional(),
+  "visible": zod.boolean().optional()
 })).optional(),
   "variations": zod.array(zod.number()).optional(),
   "date_created": zod.string().optional(),
@@ -521,6 +588,7 @@ export const ListOrdersQueryParams = zod.object({
 export const ListOrdersResponse = zod.object({
   "orders": zod.array(zod.object({
   "id": zod.number(),
+  "number": zod.string().optional(),
   "status": zod.string(),
   "total": zod.string(),
   "subtotal": zod.string().optional(),
@@ -531,9 +599,15 @@ export const ListOrdersResponse = zod.object({
   "currency_symbol": zod.string().optional(),
   "date_created": zod.string().optional(),
   "date_modified": zod.string().optional(),
+  "customer_id": zod.number().optional(),
+  "customer_note": zod.string().nullish(),
+  "payment_method": zod.string().nullish(),
+  "payment_method_title": zod.string().nullish(),
+  "transaction_id": zod.string().nullish(),
   "billing": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -546,6 +620,7 @@ export const ListOrdersResponse = zod.object({
   "shipping": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -559,8 +634,10 @@ export const ListOrdersResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "product_id": zod.number().optional(),
+  "variation_id": zod.number().optional(),
   "quantity": zod.number().optional(),
   "total": zod.string().optional(),
+  "subtotal": zod.string().optional(),
   "price": zod.number().optional(),
   "sku": zod.string().nullish(),
   "image": zod.object({
@@ -568,11 +645,32 @@ export const ListOrdersResponse = zod.object({
   "src": zod.string().optional(),
   "name": zod.string().nullish(),
   "alt": zod.string().nullish()
-}).optional()
+}).optional(),
+  "meta_data": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "key": zod.string().optional(),
+  "value": zod.string().optional()
+})).optional()
 })).optional(),
-  "payment_method_title": zod.string().nullish(),
-  "customer_note": zod.string().nullish(),
-  "number": zod.string().optional()
+  "shipping_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "method_title": zod.string().optional(),
+  "method_id": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional(),
+  "coupon_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "code": zod.string().optional(),
+  "discount": zod.string().optional(),
+  "discount_tax": zod.string().optional()
+})).optional(),
+  "fee_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional()
 })),
   "total": zod.number(),
   "totalPages": zod.number()
@@ -588,6 +686,7 @@ export const GetOrderParams = zod.object({
 
 export const GetOrderResponse = zod.object({
   "id": zod.number(),
+  "number": zod.string().optional(),
   "status": zod.string(),
   "total": zod.string(),
   "subtotal": zod.string().optional(),
@@ -598,9 +697,15 @@ export const GetOrderResponse = zod.object({
   "currency_symbol": zod.string().optional(),
   "date_created": zod.string().optional(),
   "date_modified": zod.string().optional(),
+  "customer_id": zod.number().optional(),
+  "customer_note": zod.string().nullish(),
+  "payment_method": zod.string().nullish(),
+  "payment_method_title": zod.string().nullish(),
+  "transaction_id": zod.string().nullish(),
   "billing": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -613,6 +718,7 @@ export const GetOrderResponse = zod.object({
   "shipping": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -626,8 +732,10 @@ export const GetOrderResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "product_id": zod.number().optional(),
+  "variation_id": zod.number().optional(),
   "quantity": zod.number().optional(),
   "total": zod.string().optional(),
+  "subtotal": zod.string().optional(),
   "price": zod.number().optional(),
   "sku": zod.string().nullish(),
   "image": zod.object({
@@ -635,11 +743,32 @@ export const GetOrderResponse = zod.object({
   "src": zod.string().optional(),
   "name": zod.string().nullish(),
   "alt": zod.string().nullish()
-}).optional()
+}).optional(),
+  "meta_data": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "key": zod.string().optional(),
+  "value": zod.string().optional()
+})).optional()
 })).optional(),
-  "payment_method_title": zod.string().nullish(),
-  "customer_note": zod.string().nullish(),
-  "number": zod.string().optional()
+  "shipping_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "method_title": zod.string().optional(),
+  "method_id": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional(),
+  "coupon_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "code": zod.string().optional(),
+  "discount": zod.string().optional(),
+  "discount_tax": zod.string().optional()
+})).optional(),
+  "fee_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional()
 })
 
 
@@ -655,6 +784,7 @@ export const UpdateOrderBody = zod.object({
   "billing": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -667,6 +797,7 @@ export const UpdateOrderBody = zod.object({
   "shipping": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -681,6 +812,7 @@ export const UpdateOrderBody = zod.object({
 
 export const UpdateOrderResponse = zod.object({
   "id": zod.number(),
+  "number": zod.string().optional(),
   "status": zod.string(),
   "total": zod.string(),
   "subtotal": zod.string().optional(),
@@ -691,9 +823,15 @@ export const UpdateOrderResponse = zod.object({
   "currency_symbol": zod.string().optional(),
   "date_created": zod.string().optional(),
   "date_modified": zod.string().optional(),
+  "customer_id": zod.number().optional(),
+  "customer_note": zod.string().nullish(),
+  "payment_method": zod.string().nullish(),
+  "payment_method_title": zod.string().nullish(),
+  "transaction_id": zod.string().nullish(),
   "billing": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -706,6 +844,7 @@ export const UpdateOrderResponse = zod.object({
   "shipping": zod.object({
   "first_name": zod.string().optional(),
   "last_name": zod.string().optional(),
+  "company": zod.string().optional(),
   "address_1": zod.string().optional(),
   "address_2": zod.string().optional(),
   "city": zod.string().optional(),
@@ -719,8 +858,10 @@ export const UpdateOrderResponse = zod.object({
   "id": zod.number().optional(),
   "name": zod.string().optional(),
   "product_id": zod.number().optional(),
+  "variation_id": zod.number().optional(),
   "quantity": zod.number().optional(),
   "total": zod.string().optional(),
+  "subtotal": zod.string().optional(),
   "price": zod.number().optional(),
   "sku": zod.string().nullish(),
   "image": zod.object({
@@ -728,11 +869,32 @@ export const UpdateOrderResponse = zod.object({
   "src": zod.string().optional(),
   "name": zod.string().nullish(),
   "alt": zod.string().nullish()
-}).optional()
+}).optional(),
+  "meta_data": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "key": zod.string().optional(),
+  "value": zod.string().optional()
+})).optional()
 })).optional(),
-  "payment_method_title": zod.string().nullish(),
-  "customer_note": zod.string().nullish(),
-  "number": zod.string().optional()
+  "shipping_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "method_title": zod.string().optional(),
+  "method_id": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional(),
+  "coupon_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "code": zod.string().optional(),
+  "discount": zod.string().optional(),
+  "discount_tax": zod.string().optional()
+})).optional(),
+  "fee_lines": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "total": zod.string().optional(),
+  "total_tax": zod.string().optional()
+})).optional()
 })
 
 
@@ -1055,6 +1217,85 @@ export const DeleteCouponParams = zod.object({
 })
 
 export const DeleteCouponResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List product tags
+ */
+export const ListTagsQueryParams = zod.object({
+  "page": zod.coerce.number().optional(),
+  "per_page": zod.coerce.number().optional(),
+  "search": zod.coerce.string().optional()
+})
+
+export const ListTagsResponse = zod.object({
+  "tags": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+
+
+/**
+ * @summary Create a product tag
+ */
+export const CreateTagBody = zod.object({
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a product tag
+ */
+export const GetTagParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTagResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})
+
+
+/**
+ * @summary Update a product tag
+ */
+export const UpdateTagParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateTagBody = zod.object({
+  "name": zod.string().optional(),
+  "slug": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+export const UpdateTagResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "slug": zod.string().optional(),
+  "count": zod.number().optional()
+})
+
+
+/**
+ * @summary Delete a product tag
+ */
+export const DeleteTagParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteTagResponse = zod.object({
   "message": zod.string()
 })
 

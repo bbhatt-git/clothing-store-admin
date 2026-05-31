@@ -7,6 +7,7 @@
  */
 import type { ProductUpdateCategoriesItem } from './productUpdateCategoriesItem';
 import type { ProductUpdateImagesItem } from './productUpdateImagesItem';
+import type { ProductUpdateTagsItem } from './productUpdateTagsItem';
 import type { WooAttribute } from './wooAttribute';
 
 export interface ProductUpdate {
@@ -22,6 +23,7 @@ export interface ProductUpdate {
   stock_quantity?: number;
   stock_status?: string;
   categories?: ProductUpdateCategoriesItem[];
+  tags?: ProductUpdateTagsItem[];
   images?: ProductUpdateImagesItem[];
   attributes?: WooAttribute[];
 }

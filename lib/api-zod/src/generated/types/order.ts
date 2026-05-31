@@ -6,10 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OrderAddress } from './orderAddress';
+import type { OrderCouponLine } from './orderCouponLine';
+import type { OrderFeeLine } from './orderFeeLine';
 import type { OrderLineItem } from './orderLineItem';
+import type { OrderShippingLine } from './orderShippingLine';
 
 export interface Order {
   id: number;
+  number?: string;
   status: string;
   total: string;
   subtotal?: string;
@@ -20,12 +24,19 @@ export interface Order {
   currency_symbol?: string;
   date_created?: string;
   date_modified?: string;
-  billing?: OrderAddress;
-  shipping?: OrderAddress;
-  line_items?: OrderLineItem[];
+  customer_id?: number;
+  /** @nullable */
+  customer_note?: string | null;
+  /** @nullable */
+  payment_method?: string | null;
   /** @nullable */
   payment_method_title?: string | null;
   /** @nullable */
-  customer_note?: string | null;
-  number?: string;
+  transaction_id?: string | null;
+  billing?: OrderAddress;
+  shipping?: OrderAddress;
+  line_items?: OrderLineItem[];
+  shipping_lines?: OrderShippingLine[];
+  coupon_lines?: OrderCouponLine[];
+  fee_lines?: OrderFeeLine[];
 }

@@ -8,6 +8,7 @@ import categoriesRouter from "./categories";
 import reviewsRouter from "./reviews";
 import couponsRouter from "./coupons";
 import mediaRouter from "./media";
+import tagsRouter from "./tags";
 
 const router: IRouter = Router();
 
@@ -19,6 +20,7 @@ router.use(ordersRouter);
 router.use(categoriesRouter);
 router.use(reviewsRouter);
 router.use(couponsRouter);
+router.use(tagsRouter);
 router.use(mediaRouter);
 
 export default router;

@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
+export interface OrderFeeLine {
   id?: number;
   name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
+  total?: string;
+  total_tax?: string;
 }

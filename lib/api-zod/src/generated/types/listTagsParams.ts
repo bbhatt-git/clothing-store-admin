@@ -6,10 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
-  id?: number;
-  name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
-}
+export type ListTagsParams = {
+page?: number;
+per_page?: number;
+search?: string;
+};

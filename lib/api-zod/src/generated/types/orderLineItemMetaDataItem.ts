@@ -6,10 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
+export type OrderLineItemMetaDataItem = {
   id?: number;
-  name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
-}
+  key?: string;
+  value?: string;
+};

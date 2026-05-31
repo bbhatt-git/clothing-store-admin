@@ -5,16 +5,20 @@
  * WooCommerce Admin Dashboard API
  * OpenAPI spec version: 0.1.0
  */
+import type { OrderLineItemMetaDataItem } from './orderLineItemMetaDataItem';
 import type { WooImage } from './wooImage';
 
 export interface OrderLineItem {
   id?: number;
   name?: string;
   product_id?: number;
+  variation_id?: number;
   quantity?: number;
   total?: string;
+  subtotal?: string;
   price?: number;
   /** @nullable */
   sku?: string | null;
   image?: WooImage;
+  meta_data?: OrderLineItemMetaDataItem[];
 }

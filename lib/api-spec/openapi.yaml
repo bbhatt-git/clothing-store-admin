@@ -23,6 +23,8 @@ tags:
     description: Product reviews
   - name: coupons
     description: Coupon management
+  - name: tags
+    description: Product tag management
   - name: media
     description: Media upload
 
@@ -759,6 +761,108 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /tags:
+    get:
+      operationId: listTags
+      tags: [tags]
+      summary: List product tags
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tags list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsResponse"
+    post:
+      operationId: createTag
+      tags: [tags]
+      summary: Create a product tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WooTag"
+
+  /tags/{id}:
+    get:
+      operationId: getTag
+      tags: [tags]
+      summary: Get a product tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WooTag"
+    put:
+      operationId: updateTag
+      tags: [tags]
+      summary: Update a product tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WooTag"
+    delete:
+      operationId: deleteTag
+      tags: [tags]
+      summary: Delete a product tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
   /media/upload:
     post:
       operationId: uploadMedia
@@ -874,6 +978,8 @@ components:
             type: string
         variation:
           type: boolean
+        visible:
+          type: boolean
 
     WooCategory:
       type: object
@@ -882,6 +988,53 @@ components:
           type: integer
         name:
           type: string
+
+    WooTag:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        count:
+          type: integer
+
+    TagInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+
+    TagsResponse:
+      type: object
+      required: [tags, total, totalPages]
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooTag"
+        total:
+          type: integer
+        totalPages:
+          type: integer
 
     Product:
       type: object
@@ -919,6 +1072,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/WooCategory"
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooTag"
         images:
           type: array
           items:
@@ -982,6 +1139,13 @@ components:
             properties:
               id:
                 type: integer
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
         images:
           type: array
           items:
@@ -1022,6 +1186,13 @@ components:
         stock_status:
           type: string
         categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+        tags:
           type: array
           items:
             type: object
@@ -1145,9 +1316,13 @@ components:
           type: string
         product_id:
           type: integer
+        variation_id:
+          type: integer
         quantity:
           type: integer
         total:
+          type: string
+        subtotal:
           type: string
         price:
           type: number
@@ -1155,6 +1330,17 @@ components:
           type: ["string", "null"]
         image:
           $ref: "#/components/schemas/WooImage"
+        meta_data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              key:
+                type: string
+              value:
+                type: string
 
     OrderAddress:
       type: object
@@ -1162,6 +1348,8 @@ components:
         first_name:
           type: string
         last_name:
+          type: string
+        company:
           type: string
         address_1:
           type: string
@@ -1180,12 +1368,52 @@ components:
         phone:
           type: ["string", "null"]
 
+    OrderShippingLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        method_title:
+          type: string
+        method_id:
+          type: string
+        total:
+          type: string
+        total_tax:
+          type: string
+
+    OrderCouponLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        discount:
+          type: string
+        discount_tax:
+          type: string
+
+    OrderFeeLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        total:
+          type: string
+        total_tax:
+          type: string
+
     Order:
       type: object
       required: [id, status, total]
       properties:
         id:
           type: integer
+        number:
+          type: string
         status:
           type: string
         total:
@@ -1206,6 +1434,16 @@ components:
           type: string
         date_modified:
           type: string
+        customer_id:
+          type: integer
+        customer_note:
+          type: ["string", "null"]
+        payment_method:
+          type: ["string", "null"]
+        payment_method_title:
+          type: ["string", "null"]
+        transaction_id:
+          type: ["string", "null"]
         billing:
           $ref: "#/components/schemas/OrderAddress"
         shipping:
@@ -1214,12 +1452,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OrderLineItem"
-        payment_method_title:
-          type: ["string", "null"]
-        customer_note:
-          type: ["string", "null"]
-        number:
-          type: string
+        shipping_lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderShippingLine"
+        coupon_lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderCouponLine"
+        fee_lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderFeeLine"
 
     OrdersResponse:
       type: object

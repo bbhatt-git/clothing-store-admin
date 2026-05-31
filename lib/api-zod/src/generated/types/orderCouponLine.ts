@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface WooAttribute {
+export interface OrderCouponLine {
   id?: number;
-  name?: string;
-  options?: string[];
-  variation?: boolean;
-  visible?: boolean;
+  code?: string;
+  discount?: string;
+  discount_tax?: string;
 }

@@ -7,6 +7,7 @@
  */
 import type { ProductInputCategoriesItem } from './productInputCategoriesItem';
 import type { ProductInputImagesItem } from './productInputImagesItem';
+import type { ProductInputTagsItem } from './productInputTagsItem';
 import type { WooAttribute } from './wooAttribute';
 
 export interface ProductInput {
@@ -22,6 +23,7 @@ export interface ProductInput {
   stock_quantity?: number;
   stock_status?: string;
   categories?: ProductInputCategoriesItem[];
+  tags?: ProductInputTagsItem[];
   images?: ProductInputImagesItem[];
   attributes?: WooAttribute[];
 }

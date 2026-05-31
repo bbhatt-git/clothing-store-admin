@@ -58,11 +58,37 @@ export interface WooAttribute {
   name?: string;
   options?: string[];
   variation?: boolean;
+  visible?: boolean;
 }
 
 export interface WooCategory {
   id?: number;
   name?: string;
+}
+
+export interface WooTag {
+  id: number;
+  name: string;
+  slug?: string;
+  count?: number;
+}
+
+export interface TagInput {
+  name: string;
+  slug?: string;
+  description?: string;
+}
+
+export interface TagUpdate {
+  name?: string;
+  slug?: string;
+  description?: string;
+}
+
+export interface TagsResponse {
+  tags: WooTag[];
+  total: number;
+  totalPages: number;
 }
 
 export interface Product {
@@ -83,6 +109,7 @@ export interface Product {
   description?: string;
   short_description?: string;
   categories?: WooCategory[];
+  tags?: WooTag[];
   images?: WooImage[];
   attributes?: WooAttribute[];
   variations?: number[];
@@ -97,6 +124,10 @@ export interface ProductsResponse {
 }
 
 export type ProductInputCategoriesItem = {
+  id?: number;
+};
+
+export type ProductInputTagsItem = {
   id?: number;
 };
 
@@ -118,11 +149,16 @@ export interface ProductInput {
   stock_quantity?: number;
   stock_status?: string;
   categories?: ProductInputCategoriesItem[];
+  tags?: ProductInputTagsItem[];
   images?: ProductInputImagesItem[];
   attributes?: WooAttribute[];
 }
 
 export type ProductUpdateCategoriesItem = {
+  id?: number;
+};
+
+export type ProductUpdateTagsItem = {
   id?: number;
 };
 
@@ -144,6 +180,7 @@ export interface ProductUpdate {
   stock_quantity?: number;
   stock_status?: string;
   categories?: ProductUpdateCategoriesItem[];
+  tags?: ProductUpdateTagsItem[];
   images?: ProductUpdateImagesItem[];
   attributes?: WooAttribute[];
 }
@@ -204,21 +241,31 @@ export interface VariationUpdate {
   attributes?: VariationUpdateAttributesItem[];
 }
 
+export type OrderLineItemMetaDataItem = {
+  id?: number;
+  key?: string;
+  value?: string;
+};
+
 export interface OrderLineItem {
   id?: number;
   name?: string;
   product_id?: number;
+  variation_id?: number;
   quantity?: number;
   total?: string;
+  subtotal?: string;
   price?: number;
   /** @nullable */
   sku?: string | null;
   image?: WooImage;
+  meta_data?: OrderLineItemMetaDataItem[];
 }
 
 export interface OrderAddress {
   first_name?: string;
   last_name?: string;
+  company?: string;
   address_1?: string;
   address_2?: string;
   city?: string;
@@ -231,8 +278,31 @@ export interface OrderAddress {
   phone?: string | null;
 }
 
+export interface OrderShippingLine {
+  id?: number;
+  method_title?: string;
+  method_id?: string;
+  total?: string;
+  total_tax?: string;
+}
+
+export interface OrderCouponLine {
+  id?: number;
+  code?: string;
+  discount?: string;
+  discount_tax?: string;
+}
+
+export interface OrderFeeLine {
+  id?: number;
+  name?: string;
+  total?: string;
+  total_tax?: string;
+}
+
 export interface Order {
   id: number;
+  number?: string;
   status: string;
   total: string;
   subtotal?: string;
@@ -243,14 +313,21 @@ export interface Order {
   currency_symbol?: string;
   date_created?: string;
   date_modified?: string;
-  billing?: OrderAddress;
-  shipping?: OrderAddress;
-  line_items?: OrderLineItem[];
+  customer_id?: number;
+  /** @nullable */
+  customer_note?: string | null;
+  /** @nullable */
+  payment_method?: string | null;
   /** @nullable */
   payment_method_title?: string | null;
   /** @nullable */
-  customer_note?: string | null;
-  number?: string;
+  transaction_id?: string | null;
+  billing?: OrderAddress;
+  shipping?: OrderAddress;
+  line_items?: OrderLineItem[];
+  shipping_lines?: OrderShippingLine[];
+  coupon_lines?: OrderCouponLine[];
+  fee_lines?: OrderFeeLine[];
 }
 
 export interface OrdersResponse {
@@ -430,6 +507,12 @@ product?: number;
 };
 
 export type ListCouponsParams = {
+page?: number;
+per_page?: number;
+search?: string;
+};
+
+export type ListTagsParams = {
 page?: number;
 per_page?: number;
 search?: string;

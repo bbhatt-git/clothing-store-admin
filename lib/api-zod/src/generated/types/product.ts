@@ -8,6 +8,7 @@
 import type { WooAttribute } from './wooAttribute';
 import type { WooCategory } from './wooCategory';
 import type { WooImage } from './wooImage';
+import type { WooTag } from './wooTag';
 
 export interface Product {
   id: number;
@@ -27,6 +28,7 @@ export interface Product {
   description?: string;
   short_description?: string;
   categories?: WooCategory[];
+  tags?: WooTag[];
   images?: WooImage[];
   attributes?: WooAttribute[];
   variations?: number[];
