@@ -1,10 +1,11 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth";
 import { Layout } from "@/components/layout";
+import { AnimatePresence, motion } from "framer-motion";
 import NotFound from "@/pages/not-found";
 
 import Login from "@/pages/login";
@@ -17,8 +18,16 @@ import OrderDetail from "@/pages/orders/detail";
 import Categories from "@/pages/categories/index";
 import Reviews from "@/pages/reviews/index";
 import Coupons from "@/pages/coupons/index";
+import Tags from "@/pages/tags/index";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+    },
+  },
+});
 
 function Router() {
   return (
@@ -33,8 +42,29 @@ function Router() {
       <Route path="/categories" component={Categories} />
       <Route path="/reviews" component={Reviews} />
       <Route path="/coupons" component={Coupons} />
+      <Route path="/tags" component={Tags} />
       <Route component={NotFound} />
     </Switch>
+  );
+}
+
+function AnimatedRouter() {
+  const [location] = useLocation();
+  const segment = location.split("/")[1] || "dashboard";
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={segment}
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -5 }}
+        transition={{ duration: 0.12, ease: "easeOut" }}
+        style={{ height: "100%" }}
+      >
+        <Router />
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -46,11 +76,11 @@ function App() {
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <AuthProvider>
               <Layout>
-                <Router />
+                <AnimatedRouter />
               </Layout>
             </AuthProvider>
           </WouterRouter>
-          <Toaster />
+          <Toaster richColors position="top-right" />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

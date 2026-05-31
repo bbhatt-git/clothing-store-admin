@@ -45,11 +45,11 @@ export function RichEditor({
 }: RichEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ strike: {}, code: {}, codeBlock: {} }),
       Underline,
       Highlight,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer" } }),
       Placeholder.configure({ placeholder: placeholder ?? "Write something..." }),
     ],
     content: value,
@@ -68,7 +68,7 @@ export function RichEditor({
     if (editor && !editor.isDestroyed) {
       const current = editor.getHTML()
       if (value !== current && value !== "" && value !== "<p></p>") {
-        editor.commands.setContent(value, false)
+        editor.commands.setContent(value || "")
       }
     }
   }, [value])
