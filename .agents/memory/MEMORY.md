@@ -1,0 +1,2 @@
+- [Auth token wiring](auth-token-wiring.md) — setAuthTokenGetter must be called at module level in auth.tsx; import from package root not deep path
+- [Modal state reset pattern](modal-state-reset.md) — never call setState directly in render body to reset on prop change; always use useEffect
