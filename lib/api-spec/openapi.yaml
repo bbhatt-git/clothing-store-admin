@@ -1,22 +1,37 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: WooCommerce Admin Dashboard API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: dashboard
+    description: Dashboard metrics
+  - name: products
+    description: Product management
+  - name: orders
+    description: Order management
+  - name: categories
+    description: Category management
+  - name: reviews
+    description: Product reviews
+  - name: coupons
+    description: Coupon management
+  - name: media
+    description: Media upload
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +39,745 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Not authenticated
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard overview stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/sales-chart:
+    get:
+      operationId: getSalesChart
+      tags: [dashboard]
+      summary: Get sales trend data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7days, 30days, 90days]
+      responses:
+        "200":
+          description: Sales chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesDataPoint"
+
+  /dashboard/recent-orders:
+    get:
+      operationId: getRecentOrders
+      tags: [dashboard]
+      summary: Get recent orders for dashboard
+      responses:
+        "200":
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /dashboard/low-stock:
+    get:
+      operationId: getLowStockProducts
+      tags: [dashboard]
+      summary: Get low stock products
+      responses:
+        "200":
+          description: Low stock products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: stock_status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsResponse"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /products/{id}/variations:
+    get:
+      operationId: listProductVariations
+      tags: [products]
+      summary: List product variations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Variations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductVariation"
+    post:
+      operationId: createProductVariation
+      tags: [products]
+      summary: Create a product variation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+
+  /products/{id}/variations/{variationId}:
+    put:
+      operationId: updateProductVariation
+      tags: [products]
+      summary: Update a product variation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: variationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariationUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+    delete:
+      operationId: deleteProductVariation
+      tags: [products]
+      summary: Delete a product variation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: variationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: after
+          in: query
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrdersResponse"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    put:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Update an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      operationId: deleteOrder
+      tags: [orders]
+      summary: Delete an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List categories
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    get:
+      operationId: getCategory
+      tags: [categories]
+      summary: Get a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    put:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List reviews
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: product
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+  /reviews/{id}:
+    get:
+      operationId: getReview
+      tags: [reviews]
+      summary: Get a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    put:
+      operationId: updateReview
+      tags: [reviews]
+      summary: Update review status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    delete:
+      operationId: deleteReview
+      tags: [reviews]
+      summary: Delete a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /coupons:
+    get:
+      operationId: listCoupons
+      tags: [coupons]
+      summary: List coupons
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+    post:
+      operationId: createCoupon
+      tags: [coupons]
+      summary: Create a coupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /coupons/{id}:
+    get:
+      operationId: getCoupon
+      tags: [coupons]
+      summary: Get a coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Coupon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    put:
+      operationId: updateCoupon
+      tags: [coupons]
+      summary: Update a coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    delete:
+      operationId: deleteCoupon
+      tags: [coupons]
+      summary: Delete a coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /media/upload:
+    post:
+      operationId: uploadMedia
+      tags: [media]
+      summary: Upload media to WordPress
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MediaUpload"
+      responses:
+        "200":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +785,667 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthToken:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/AdminUser"
+
+    AdminUser:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+        email:
+          type: ["string", "null"]
+
+    DashboardStats:
+      type: object
+      required: [totalSales, ordersToday, activeProducts, lowStockCount, totalOrders, pendingOrders]
+      properties:
+        totalSales:
+          type: string
+        ordersToday:
+          type: integer
+        activeProducts:
+          type: integer
+        lowStockCount:
+          type: integer
+        totalOrders:
+          type: integer
+        pendingOrders:
+          type: integer
+
+    SalesDataPoint:
+      type: object
+      required: [date, sales, orders]
+      properties:
+        date:
+          type: string
+        sales:
+          type: number
+        orders:
+          type: integer
+
+    WooImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        src:
+          type: string
+        name:
+          type: ["string", "null"]
+        alt:
+          type: ["string", "null"]
+
+    WooAttribute:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        variation:
+          type: boolean
+
+    WooCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    Product:
+      type: object
+      required: [id, name, status]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        type:
+          type: string
+        price:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        sku:
+          type: ["string", "null"]
+        stock_quantity:
+          type: ["integer", "null"]
+        stock_status:
+          type: string
+        manage_stock:
+          type: boolean
+        description:
+          type: string
+        short_description:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooCategory"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooImage"
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooAttribute"
+        variations:
+          type: array
+          items:
+            type: integer
+        date_created:
+          type: string
+        date_modified:
+          type: string
+
+    ProductsResponse:
+      type: object
+      required: [products, total, totalPages]
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ProductInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+        type:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        description:
+          type: string
+        short_description:
+          type: string
+        sku:
+          type: string
+        manage_stock:
+          type: boolean
+        stock_quantity:
+          type: integer
+        stock_status:
+          type: string
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              src:
+                type: string
+              id:
+                type: integer
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooAttribute"
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+        type:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        description:
+          type: string
+        short_description:
+          type: string
+        sku:
+          type: string
+        manage_stock:
+          type: boolean
+        stock_quantity:
+          type: integer
+        stock_status:
+          type: string
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              src:
+                type: string
+              id:
+                type: integer
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WooAttribute"
+
+    ProductVariation:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        sku:
+          type: ["string", "null"]
+        price:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        stock_quantity:
+          type: ["integer", "null"]
+        stock_status:
+          type: string
+        manage_stock:
+          type: boolean
+        image:
+          $ref: "#/components/schemas/WooImage"
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              option:
+                type: string
+
+    VariationInput:
+      type: object
+      properties:
+        status:
+          type: string
+        sku:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        manage_stock:
+          type: boolean
+        stock_quantity:
+          type: integer
+        stock_status:
+          type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              option:
+                type: string
+
+    VariationUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        sku:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        manage_stock:
+          type: boolean
+        stock_quantity:
+          type: integer
+        stock_status:
+          type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              option:
+                type: string
+
+    OrderLineItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        total:
+          type: string
+        price:
+          type: number
+        sku:
+          type: ["string", "null"]
+        image:
+          $ref: "#/components/schemas/WooImage"
+
+    OrderAddress:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        address_1:
+          type: string
+        address_2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+
+    Order:
+      type: object
+      required: [id, status, total]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        total:
+          type: string
+        subtotal:
+          type: string
+        total_tax:
+          type: string
+        shipping_total:
+          type: string
+        discount_total:
+          type: string
+        currency:
+          type: string
+        currency_symbol:
+          type: string
+        date_created:
+          type: string
+        date_modified:
+          type: string
+        billing:
+          $ref: "#/components/schemas/OrderAddress"
+        shipping:
+          $ref: "#/components/schemas/OrderAddress"
+        line_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderLineItem"
+        payment_method_title:
+          type: ["string", "null"]
+        customer_note:
+          type: ["string", "null"]
+        number:
+          type: string
+
+    OrdersResponse:
+      type: object
+      required: [orders, total, totalPages]
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    OrderUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        billing:
+          $ref: "#/components/schemas/OrderAddress"
+        shipping:
+          $ref: "#/components/schemas/OrderAddress"
+        customer_note:
+          type: string
+
+    CategoryImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        src:
+          type: string
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        parent:
+          type: integer
+        description:
+          type: string
+        count:
+          type: integer
+        image:
+          $ref: "#/components/schemas/CategoryImage"
+
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        parent:
+          type: integer
+        description:
+          type: string
+        image:
+          type: object
+          properties:
+            id:
+              type: integer
+            src:
+              type: string
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        parent:
+          type: integer
+        description:
+          type: string
+        image:
+          type: object
+          properties:
+            id:
+              type: integer
+            src:
+              type: string
+
+    Review:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        product_name:
+          type: ["string", "null"]
+        status:
+          type: string
+        reviewer:
+          type: string
+        reviewer_email:
+          type: string
+        review:
+          type: string
+        rating:
+          type: integer
+        verified:
+          type: boolean
+        date_created:
+          type: string
+
+    ReviewUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        review:
+          type: string
+        rating:
+          type: integer
+
+    Coupon:
+      type: object
+      required: [id, code]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        amount:
+          type: string
+        discount_type:
+          type: string
+        description:
+          type: string
+        date_expires:
+          type: ["string", "null"]
+        usage_count:
+          type: integer
+        usage_limit:
+          type: ["integer", "null"]
+        usage_limit_per_user:
+          type: ["integer", "null"]
+        individual_use:
+          type: boolean
+        free_shipping:
+          type: boolean
+        minimum_amount:
+          type: string
+        maximum_amount:
+          type: string
+        date_created:
+          type: string
+
+    CouponInput:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+        amount:
+          type: string
+        discount_type:
+          type: string
+        description:
+          type: string
+        date_expires:
+          type: string
+        usage_limit:
+          type: integer
+        usage_limit_per_user:
+          type: integer
+        individual_use:
+          type: boolean
+        free_shipping:
+          type: boolean
+        minimum_amount:
+          type: string
+        maximum_amount:
+          type: string
+
+    CouponUpdate:
+      type: object
+      properties:
+        code:
+          type: string
+        amount:
+          type: string
+        discount_type:
+          type: string
+        description:
+          type: string
+        date_expires:
+          type: string
+        usage_limit:
+          type: integer
+        usage_limit_per_user:
+          type: integer
+        individual_use:
+          type: boolean
+        free_shipping:
+          type: boolean
+        minimum_amount:
+          type: string
+        maximum_amount:
+          type: string
+
+    MediaUpload:
+      type: object
+      properties:
+        filename:
+          type: string
+
+    MediaItem:
+      type: object
+      required: [id, url]
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        title:
+          type: string
