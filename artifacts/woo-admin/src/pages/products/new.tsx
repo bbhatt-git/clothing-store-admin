@@ -4,6 +4,7 @@ import {
   useCreateProduct,
   useListCategories,
   getListProductsQueryKey,
+  useListTags,
 } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
@@ -66,6 +67,10 @@ export default function ProductNew() {
 
   const [tagInput, setTagInput] = useState("")
   const [tagNames, setTagNames] = useState<string[]>([])
+  const [tagOpen, setTagOpen] = useState(false)
+
+  const { data: tagsData } = useListTags({ per_page: 100 })
+  const allTags = tagsData?.tags ?? []
 
   const [images, setImages] = useState<UploadedImage[]>([])
 
@@ -104,8 +109,9 @@ export default function ProductNew() {
     setAttributes((prev) => prev.filter((a) => a.id !== id))
   }
 
-  const addTag = () => {
-    const trimmed = tagInput.trim()
+  const addTag = (name?: string) => {
+    const trimmed = (name ?? tagInput).trim()
+    setTagOpen(false)
     if (trimmed && !tagNames.includes(trimmed)) {
       setTagNames((prev) => [...prev, trimmed])
     }
@@ -520,44 +526,44 @@ export default function ProductNew() {
 
           <div className="bg-card border border-border rounded-md p-4 space-y-3">
             <h3 className="font-semibold text-sm">Tags</h3>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                placeholder="Type a tag..."
-                className="text-sm h-8"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    addTag()
-                  }
-                  if (e.key === ",") {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTag}
-                disabled={!tagInput.trim()}
-                className="h-8"
-              >
-                Add
-              </Button>
-            </div>
+            <Popover open={tagOpen} onOpenChange={setTagOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between font-normal text-sm" size="sm">
+                  {tagInput || "Search or add a tag..."}
+                  <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[260px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Type a tag..." value={tagInput} onValueChange={setTagInput} />
+                  <CommandList>
+                    <CommandEmpty>
+                      {tagInput.trim() ? (
+                        <button className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent" onClick={() => addTag(tagInput.trim())}>
+                          Create &quot;{tagInput.trim()}&quot;
+                        </button>
+                      ) : "Type to search or create a tag"}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {allTags
+                        .filter((t) => !tagNames.includes(t.name ?? ""))
+                        .filter((t) => !tagInput || t.name?.toLowerCase().includes(tagInput.toLowerCase()))
+                        .map((t) => (
+                          <CommandItem key={t.id} value={t.name} onSelect={() => addTag(t.name ?? "")}>
+                            {t.name}
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             {tagNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {tagNames.map((tag) => (
                   <Badge key={tag} variant="secondary" className="gap-1 text-xs pr-1">
                     {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-0.5 hover:text-destructive transition-colors"
-                    >
+                    <button type="button" onClick={() => removeTag(tag)} className="ml-0.5 hover:text-destructive transition-colors">
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -565,7 +571,7 @@ export default function ProductNew() {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Press Enter or comma to add. New tags are auto-created.
+              Select existing tags or type to create new ones.
             </p>
           </div>
 

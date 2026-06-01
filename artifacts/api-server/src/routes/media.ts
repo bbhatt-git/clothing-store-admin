@@ -18,16 +18,14 @@ router.post("/media/upload", requireAuth, upload.single("file"), async (req, res
     const wpPass = process.env.WP_APP_PASSWORD ?? process.env.ADMIN_PASSWORD ?? "";
     const auth = Buffer.from(`${wpUser}:${wpPass}`).toString("base64");
 
-    const formData = new FormData();
-    const blob = new Blob([req.file.buffer as unknown as ArrayBuffer], { type: req.file.mimetype });
-    formData.append("file", blob, req.file.originalname);
-
     const response = await fetch(`${WOO_URL}/wp-json/wp/v2/media`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
+        "Content-Disposition": `attachment; filename="${req.file.originalname}"`,
+        "Content-Type": req.file.mimetype,
       },
-      body: formData,
+      body: req.file.buffer,
     });
 
     if (!response.ok) {

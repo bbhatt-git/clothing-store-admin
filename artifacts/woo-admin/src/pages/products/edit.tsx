@@ -10,8 +10,17 @@ import {
   useCreateProductVariation,
   useDeleteProductVariation,
   useListCategories,
+  useListTags,
 } from "@workspace/api-client-react"
 import type { ProductVariation } from "@workspace/api-client-react"
+
+interface AttributeRow {
+  id: string
+  name: string
+  options: string[]
+  variation: boolean
+  visible: boolean
+}
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -283,8 +292,15 @@ export default function ProductEdit() {
   const [catOpen, setCatOpen] = useState(false)
   const [tagInput, setTagInput] = useState("")
   const [tagNames, setTagNames] = useState<string[]>([])
+  const [tagOpen, setTagOpen] = useState(false)
   const [images, setImages] = useState<UploadedImage[]>([])
   const [generatingVariations, setGeneratingVariations] = useState(false)
+  const [editableAttributes, setEditableAttributes] = useState<AttributeRow[]>([])
+  const [newAttrName, setNewAttrName] = useState("")
+  const [newAttrOptions, setNewAttrOptions] = useState("")
+
+  const { data: tagsData } = useListTags({ per_page: 100 })
+  const allTags = tagsData?.tags ?? []
 
   const initRef = useRef<number | null>(null)
   useEffect(() => {
@@ -302,6 +318,15 @@ export default function ProductEdit() {
       setStockStatus((product as unknown as Record<string, unknown>).stock_status as string || "instock")
       setSelectedCategoryIds(product.categories?.map((c) => c.id).filter((id): id is number => id !== undefined) ?? [])
       setTagNames(product.tags?.map((t) => t.name) ?? [])
+      setEditableAttributes(
+        product.attributes?.map((a) => ({
+          id: crypto.randomUUID(),
+          name: a.name ?? "",
+          options: a.options ?? [],
+          variation: a.variation ?? false,
+          visible: a.visible ?? true,
+        })) ?? []
+      )
       setImages(
         product.images?.map((img) => ({
           id: img.id ?? 0,
@@ -318,13 +343,30 @@ export default function ProductEdit() {
     )
   }
 
-  const addTag = () => {
-    const trimmed = tagInput.trim()
+  const addTag = (name?: string) => {
+    const trimmed = (name ?? tagInput).trim()
     if (trimmed && !tagNames.includes(trimmed)) setTagNames((prev) => [...prev, trimmed])
     setTagInput("")
+    setTagOpen(false)
   }
 
   const removeTag = (name: string) => setTagNames((prev) => prev.filter((t) => t !== name))
+
+  const addAttribute = () => {
+    if (!newAttrName.trim() || !newAttrOptions.trim()) return
+    const options = newAttrOptions.split(",").map((v) => v.trim()).filter(Boolean)
+    if (!options.length) return
+    setEditableAttributes((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name: newAttrName.trim(), options, variation: true, visible: true },
+    ])
+    setNewAttrName("")
+    setNewAttrOptions("")
+  }
+
+  const removeAttribute = (id: string) => {
+    setEditableAttributes((prev) => prev.filter((a) => a.id !== id))
+  }
 
   const handleSave = async () => {
     try {
@@ -344,6 +386,13 @@ export default function ProductEdit() {
           categories: selectedCategoryIds.map((id) => ({ id })),
           tags: tagNames.map((n) => ({ name: n } as never)),
           images: images.map((img) => ({ id: img.id, src: img.src })),
+          attributes: editableAttributes.map((a, i) => ({
+            name: a.name,
+            position: i,
+            visible: a.visible,
+            variation: a.variation,
+            options: a.options,
+          })),
         } as never,
       })
       toast.success("Product updated")
@@ -562,46 +611,63 @@ export default function ProductEdit() {
             </>
           )}
 
+          <div className="bg-card border border-border rounded-md p-6 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              Attributes
+            </h3>
+            {editableAttributes.length > 0 && (
+              <div className="space-y-2">
+                {editableAttributes.map((attr) => (
+                  <div key={attr.id} className="flex items-start gap-2 p-3 bg-muted/40 rounded-md border border-border">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm mb-1.5">{attr.name}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {attr.options.map((opt) => (
+                          <span key={opt} className="px-2 py-0.5 bg-background border border-border text-xs rounded-full">
+                            {opt}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    {attr.variation && (
+                      <Badge variant="secondary" className="text-xs shrink-0 mt-0.5">Variations</Badge>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeAttribute(attr.id)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 items-start">
+              <Input
+                placeholder="Attribute name (e.g. Size)"
+                value={newAttrName}
+                onChange={(e) => setNewAttrName(e.target.value)}
+                className="text-sm h-8 flex-1"
+              />
+              <Input
+                placeholder="Options, comma-separated (e.g. S,M,L)"
+                value={newAttrOptions}
+                onChange={(e) => setNewAttrOptions(e.target.value)}
+                className="text-sm h-8 flex-1"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAttribute() } }}
+              />
+              <Button type="button" variant="outline" size="sm" onClick={addAttribute} className="h-8 shrink-0">
+                Add
+              </Button>
+            </div>
+          </div>
+
           {product?.type === "variable" && (
             <>
-              {product.attributes && product.attributes.length > 0 && (
-                <div className="bg-card border border-border rounded-md p-6 space-y-3">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    Attributes
-                  </h3>
-                  <div className="space-y-2">
-                    {product.attributes.map((attr, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-3 p-3 bg-muted/40 rounded-md border border-border"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">{attr.name}</div>
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {attr.options?.map((opt) => (
-                              <span
-                                key={opt}
-                                className="px-2 py-0.5 bg-background border border-border text-xs rounded-full"
-                              >
-                                {opt}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {attr.variation && (
-                          <Badge variant="secondary" className="text-xs shrink-0">
-                            For variations
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    To modify attributes, use the WooCommerce backend or delete and recreate the product.
-                  </p>
-                </div>
-              )}
 
               <div className="bg-card border border-border rounded-md p-6 space-y-4">
                 <div className="flex items-center justify-between">
@@ -794,44 +860,53 @@ export default function ProductEdit() {
 
           <div className="bg-card border border-border rounded-md p-4 space-y-3">
             <h3 className="font-semibold text-sm">Tags</h3>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                placeholder="Add a tag..."
-                className="text-sm h-8"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    addTag()
-                  }
-                  if (e.key === ",") {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTag}
-                disabled={!tagInput.trim()}
-                className="h-8"
-              >
-                Add
-              </Button>
-            </div>
+            <Popover open={tagOpen} onOpenChange={setTagOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between font-normal text-sm" size="sm">
+                  {tagInput || "Search or add a tag..."}
+                  <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[260px] p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Type a tag..."
+                    value={tagInput}
+                    onValueChange={setTagInput}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {tagInput.trim() ? (
+                        <button
+                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent"
+                          onClick={() => addTag(tagInput.trim())}
+                        >
+                          Create &quot;{tagInput.trim()}&quot;
+                        </button>
+                      ) : (
+                        "Type to search or create a tag"
+                      )}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {allTags
+                        .filter((t) => !tagNames.includes(t.name ?? ""))
+                        .filter((t) => !tagInput || t.name?.toLowerCase().includes(tagInput.toLowerCase()))
+                        .map((t) => (
+                          <CommandItem key={t.id} value={t.name} onSelect={() => addTag(t.name ?? "")}>
+                            {t.name}
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             {tagNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {tagNames.map((tag) => (
                   <Badge key={tag} variant="secondary" className="gap-1 text-xs pr-1">
                     {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-0.5 hover:text-destructive transition-colors"
-                    >
+                    <button type="button" onClick={() => removeTag(tag)} className="ml-0.5 hover:text-destructive transition-colors">
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
