@@ -20,7 +20,7 @@ export default async function HomePage() {
   const db = await readDb();
 
   const allProducts = db.products || [];
-  
+
   const newArrivals = [...allProducts]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 4);
@@ -28,14 +28,17 @@ export default async function HomePage() {
   const featuredProducts = allProducts.filter(p => p.is_featured).slice(0, 4);
   const bestsellers = featuredProducts.length > 0 ? featuredProducts : allProducts.slice(4, 8);
 
+  // Build category links from real WooCommerce category slugs
+  const categories = db.categories.filter(c => c.is_active && c.count > 0).slice(0, 4);
+
   return (
     <div className="flex flex-col bg-[#F5F5F0] text-[#121212] font-sans">
       <Navbar />
 
       <main>
-        
+
         {/* HERO SECTION */}
-        <HeroClient featuredProducts={featuredProducts} />
+        <HeroClient featuredProducts={featuredProducts.length > 0 ? featuredProducts : allProducts.slice(0, 4)} allProducts={allProducts} />
 
         {/* Bento Grid Categories */}
         <section className="py-8 md:py-12 px-6 md:px-10 bg-[#F5F5F0]">
@@ -49,33 +52,62 @@ export default async function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link href="/shop?category=hoodies" className="group relative col-span-2 row-span-2 bg-[#121212] rounded-[4px] overflow-hidden aspect-square md:aspect-auto min-h-[300px]">
-                <div className="absolute inset-0">
-                  <img src="https://images.pexels.com/photos/428340/pexels-photo-428340.jpeg" alt="Hoodies" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white font-display mb-1">Hoodies</h3>
-                  <p className="text-xs text-white/70">Premium comfort &amp; style</p>
-                </div>
-              </Link>
-              <Link href="/shop?category=jackets" className="group relative bg-white border border-[#121212]/5 rounded-[4px] overflow-hidden aspect-square">
-                <div className="absolute inset-0">
-                  <img src="https://images.pexels.com/photos/1124468/pexels-photo-1124468.jpeg" alt="Jackets" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <h3 className="text-lg font-black uppercase tracking-tighter text-white font-display">Jackets</h3>
-                </div>
-              </Link>
-              <Link href="/shop?category=tshirts" className="group relative bg-[#FE5733] rounded-[4px] overflow-hidden aspect-square">
-                <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <h3 className="text-lg font-black uppercase tracking-tighter text-white font-display">T-Shirts</h3>
-                  <p className="text-xs text-white/80">Everyday essentials</p>
-                </div>
-              </Link>
-            </div>
+            {categories.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {categories.slice(0, 1).map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/shop?category=${encodeURIComponent(cat.name)}`}
+                    className="group relative col-span-2 row-span-2 bg-[#121212] rounded-[4px] overflow-hidden aspect-square md:aspect-auto min-h-[300px]"
+                  >
+                    <div className="absolute inset-0">
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </div>
+                    <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                      <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white font-display mb-1">{cat.name}</h3>
+                      <p className="text-xs text-white/70">{cat.count} products</p>
+                    </div>
+                  </Link>
+                ))}
+                {categories.slice(1, 4).map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/shop?category=${encodeURIComponent(cat.name)}`}
+                    className="group relative bg-white border border-[#121212]/5 rounded-[4px] overflow-hidden aspect-square"
+                  >
+                    <div className="absolute inset-0">
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-stone-100 to-stone-200" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </div>
+                    <div className="absolute inset-0 flex flex-col justify-end p-4">
+                      <h3 className="text-lg font-black uppercase tracking-tighter text-white font-display">{cat.name}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Link href="/shop" className="group relative col-span-2 row-span-2 bg-[#121212] rounded-[4px] overflow-hidden aspect-square md:aspect-auto min-h-[300px]">
+                  <div className="absolute inset-0">
+                    <img src="https://images.pexels.com/photos/428340/pexels-photo-428340.jpeg" alt="Shop All" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  </div>
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                    <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white font-display mb-1">All Products</h3>
+                    <p className="text-xs text-white/70">Browse everything</p>
+                  </div>
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 

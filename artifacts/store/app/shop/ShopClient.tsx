@@ -29,13 +29,29 @@ interface Product {
 
 interface ShopClientProps {
   initialProducts: Product[];
+  initialCategory?: string;
+  initialSize?: string;
+  initialColor?: string;
+  initialSearch?: string;
 }
 
-export default function ShopClient({ initialProducts }: ShopClientProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedSize, setSelectedSize] = useState('All');
-  const [selectedColor, setSelectedColor] = useState('All');
+export default function ShopClient({ initialProducts, initialCategory, initialSize, initialColor, initialSearch }: ShopClientProps) {
+  const [searchTerm, setSearchTerm] = useState(initialSearch || '');
+  const [selectedCategory, setSelectedCategory] = useState(
+    initialCategory
+      ? (initialProducts.flatMap(p => p.categories).find(c => c.toLowerCase() === initialCategory.toLowerCase()) || 'All')
+      : 'All'
+  );
+  const [selectedSize, setSelectedSize] = useState(
+    initialSize
+      ? (initialProducts.flatMap(p => p.sizes).find(s => s.toLowerCase() === initialSize.toLowerCase()) || 'All')
+      : 'All'
+  );
+  const [selectedColor, setSelectedColor] = useState(
+    initialColor
+      ? (initialProducts.flatMap(p => p.colors).find(c => c.toLowerCase() === initialColor.toLowerCase()) || 'All')
+      : 'All'
+  );
   
   // Extract all categories, sizes, and colors for filter buttons
   const categories = ['All', ...Array.from(new Set(initialProducts.flatMap(p => p.categories)))];

@@ -1,4 +1,16 @@
-import { fetchProducts, fetchProduct, fetchCategories, WooProduct } from "./woocommerce";
+import { fetchProducts, fetchProduct, fetchCategories, fetchVariations, WooProduct, WooVariation } from "./woocommerce";
+
+export interface Variation {
+  id: string;
+  sku: string;
+  price: number;
+  regular_price: number;
+  sale_price: number | null;
+  stock: number;
+  in_stock: boolean;
+  attributes: { name: string; option: string }[];
+  image: string | null;
+}
 
 export interface Product {
   id: string;
@@ -9,6 +21,7 @@ export interface Product {
   category_id: number;
   brand: string;
   gender: string;
+  type: string;
   base_price: number;
   sale_price: number | null;
   discount_pct: number;
@@ -23,6 +36,7 @@ export interface Product {
   colors: string[];
   sizes: string[];
   sku: string;
+  variations: Variation[];
   created_at: string;
   updated_at: string;
 }
@@ -40,7 +54,7 @@ export interface Category {
   count: number;
 }
 
-export function transformWooProduct(woo: WooProduct): Product {
+export function transformWooProduct(woo: WooProduct, wooVariations: WooVariation[] = []): Product {
   const base_price = parseFloat(woo.regular_price || woo.price || "0");
   const sale_price_raw = woo.sale_price ? parseFloat(woo.sale_price) : null;
   const sale_price = sale_price_raw !== null && sale_price_raw > 0 && sale_price_raw < base_price ? sale_price_raw : null;
@@ -57,10 +71,29 @@ export function transformWooProduct(woo: WooProduct): Product {
   const categories = (woo.categories || []).map((c) => c.name).filter(Boolean);
   const tags = (woo.tags || []).map((t) => t.name).filter(Boolean);
 
+  const variations: Variation[] = wooVariations.map((v) => {
+    const vRegular = parseFloat(v.regular_price || v.price || "0");
+    const vSaleRaw = v.sale_price ? parseFloat(v.sale_price) : null;
+    const vSale = vSaleRaw !== null && vSaleRaw > 0 && vSaleRaw < vRegular ? vSaleRaw : null;
+    const vStock = v.stock_quantity ?? (v.stock_status === "instock" ? 99 : 0);
+    return {
+      id: String(v.id),
+      sku: v.sku || "",
+      price: parseFloat(v.price || "0"),
+      regular_price: vRegular,
+      sale_price: vSale,
+      stock: vStock,
+      in_stock: v.stock_status === "instock" || (v.stock_quantity !== null && v.stock_quantity > 0),
+      attributes: (v.attributes || []).map((a) => ({ name: a.name, option: a.option })),
+      image: v.image?.src || null,
+    };
+  });
+
   return {
     id: String(woo.id),
     name: woo.name || "",
     slug: woo.slug || "",
+    type: woo.type || "simple",
     description: woo.description || "",
     short_description: woo.short_description || "",
     category_id: woo.categories?.[0]?.id ?? 0,
@@ -80,6 +113,7 @@ export function transformWooProduct(woo: WooProduct): Product {
     colors,
     sizes,
     sku: woo.sku || "",
+    variations,
     created_at: woo.date_created || new Date().toISOString(),
     updated_at: woo.date_modified || new Date().toISOString(),
   };
@@ -96,7 +130,7 @@ export async function readDb(): Promise<Db> {
     fetchCategories(),
   ]);
 
-  const products = wooProducts.map(transformWooProduct);
+  const products = wooProducts.map((p) => transformWooProduct(p, []));
 
   const categories: Category[] = wooCategories.map((c) => ({
     id: c.id,
@@ -116,7 +150,14 @@ export async function readDb(): Promise<Db> {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const woo = await fetchProduct(slug);
-  return woo ? transformWooProduct(woo) : null;
+  if (!woo) return null;
+
+  let wooVariations: WooVariation[] = [];
+  if (woo.type === "variable" && Array.isArray(woo.variations) && woo.variations.length > 0) {
+    wooVariations = await fetchVariations(woo.id);
+  }
+
+  return transformWooProduct(woo, wooVariations);
 }
 
 export type { WooProduct };

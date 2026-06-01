@@ -6,6 +6,7 @@ export interface WooProduct {
   id: number;
   name: string;
   slug: string;
+  type: string;
   status: string;
   featured: boolean;
   description: string;
@@ -26,6 +27,19 @@ export interface WooProduct {
   variations: number[];
   date_created: string;
   date_modified: string;
+}
+
+export interface WooVariation {
+  id: number;
+  sku: string;
+  price: string;
+  regular_price: string;
+  sale_price: string;
+  status: string;
+  stock_status: string;
+  stock_quantity: number | null;
+  attributes: { id: number; name: string; option: string }[];
+  image: { id: number; src: string } | null;
 }
 
 export interface WooCategory {
@@ -65,6 +79,15 @@ export async function fetchProduct(slug: string): Promise<WooProduct | null> {
   const result = await wooFetch("products", { slug, status: "publish" });
   const arr = result as WooProduct[];
   return arr[0] ?? null;
+}
+
+export async function fetchVariations(productId: number): Promise<WooVariation[]> {
+  try {
+    const result = await wooFetch(`products/${productId}/variations`, { per_page: 100 });
+    return result as WooVariation[];
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchCategories(): Promise<WooCategory[]> {

@@ -18,8 +18,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function ShopPage() {
-  const db = await readDb();
+interface ShopPageProps {
+  searchParams: Promise<{ category?: string; size?: string; color?: string; search?: string }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const [db, params] = await Promise.all([readDb(), searchParams]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F5F5F0]">
@@ -27,8 +31,7 @@ export default async function ShopPage() {
 
       <main className="flex-grow px-6 md:px-10 pt-8 md:pt-12 pb-8 md:pb-12">
         <div className="max-w-[1560px] mx-auto">
-          
-          {/* Page Title */}
+
           <div className="mb-8 md:mb-12">
             <p className="text-xs font-bold tracking-[0.3em] text-[#FE5733] uppercase mb-2 font-mono">
               THE STYLE ZONE • COLLECTION
@@ -41,7 +44,13 @@ export default async function ShopPage() {
             </p>
           </div>
 
-          <ShopClient initialProducts={db.products} />
+          <ShopClient
+            initialProducts={db.products}
+            initialCategory={params.category}
+            initialSize={params.size}
+            initialColor={params.color}
+            initialSearch={params.search}
+          />
 
         </div>
       </main>

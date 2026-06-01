@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { readDb } from '@/lib/db';
+import { getProductBySlug, readDb } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -15,21 +15,15 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Generate dynamic metadata for each product
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const db = await readDb();
-  const product = db.products.find((p) => p.slug === resolvedParams.slug);
+  const product = await getProductBySlug(resolvedParams.slug);
 
   if (!product) {
-    return {
-      title: 'Product Not Found | The Style Zone',
-    };
+    return { title: 'Product Not Found | The Style Zone' };
   }
 
-  const price = product.sale_price !== null && product.sale_price !== undefined ? product.sale_price : product.base_price;
-  
-  // Ensure all keywords are strings
+  const price = product.sale_price ?? product.base_price;
   const keywords = [
     ...product.categories,
     product.brand,
@@ -37,25 +31,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     product.name,
     'fashion',
     'clothing',
-    'Mahendranagar'
-  ].filter(Boolean).map(k => String(k));
-  
+    'Mahendranagar',
+  ].filter(Boolean).map((k) => String(k));
+
   return {
     title: `${product.name} | The Style Zone`,
-    description: product.short_description || product.description || `Shop ${product.name} at The Style Zone. Quality ${product.categories.join(', ')} with COD delivery across Nepal.`,
-    keywords: keywords,
+    description:
+      product.short_description ||
+      product.description ||
+      `Shop ${product.name} at The Style Zone. Quality ${product.categories.join(', ')} with COD delivery across Nepal.`,
+    keywords,
     openGraph: {
       title: `${product.name} | The Style Zone`,
       description: product.short_description || product.description,
       type: 'website',
-      images: product.images[0] ? [
-        {
-          url: product.images[0],
-          width: 800,
-          height: 1000,
-          alt: product.name,
-        },
-      ] : [],
+      images: product.images[0]
+        ? [{ url: product.images[0], width: 800, height: 1000, alt: product.name }]
+        : [],
     },
     twitter: {
       card: 'summary_large_image',
@@ -68,34 +60,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
-  const db = await readDb();
-  const product = db.products.find((p) => p.slug === resolvedParams.slug);
 
-  if (!product) {
-    return notFound();
-  }
+  const [product, db] = await Promise.all([
+    getProductBySlug(resolvedParams.slug),
+    readDb(),
+  ]);
 
-  // Find related products
+  if (!product) return notFound();
+
   const relatedProducts = db.products
     .filter((p) => p.id !== product.id && p.categories.some((cat) => product.categories.includes(cat)))
     .slice(0, 4);
 
-  // Product Schema
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: product.short_description || product.description,
     image: product.images,
-    brand: {
-      '@type': 'Brand',
-      name: product.brand,
-    },
+    brand: { '@type': 'Brand', name: product.brand },
     offers: {
       '@type': 'Offer',
-      price: product.sale_price || product.base_price,
+      price: product.sale_price ?? product.base_price,
       priceCurrency: 'NPR',
-      availability: product.stock_total > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability:
+        product.stock_total > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
       url: `https://thestylezone.com.np/shop/${product.slug}`,
     },
     category: product.categories.join(', '),
@@ -103,18 +94,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F5F5F0]">
-      {/* Product Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
-      
+
       <Navbar />
 
-      {/* Main Container */}
       <main className="flex-grow py-8 px-6 md:px-10">
         <div className="max-w-[1560px] mx-auto">
-          
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 mb-10 text-xs font-mono font-bold text-[#121212]/40 uppercase">
             <Link href="/" className="hover:text-[#FE5733] transition-colors">THE STYLE ZONE</Link>
@@ -124,10 +112,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <span className="text-[#121212]/80 max-w-[200px] truncate">{product.name}</span>
           </div>
 
-          {/* Dynamic Details Interactive Section */}
           <ProductDetailsClient product={product} />
 
-          {/* Related Products Grid */}
           {relatedProducts.length > 0 && (
             <div className="mt-32 border-t border-[#121212]/10 pt-16">
               <p className="text-xs font-bold tracking-[0.25em] text-[#FE5733] uppercase mb-3 font-mono">
@@ -136,7 +122,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-[#121212] font-display mb-10">
                 Related <span className="text-[#FE5733]">Creations.</span>
               </h3>
-              
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {relatedProducts.map((p) => (
                   <ProductCard key={p.id} product={p} />
@@ -144,7 +129,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
             </div>
           )}
-
         </div>
       </main>
 

@@ -21,9 +21,7 @@ export default function Navbar() {
   }, []);
 
   const isActive = (path: string) => {
-    if (path === '/') {
-      return false; // Never show active state for home page
-    }
+    if (path === '/') return false;
     return pathname === path || pathname.startsWith(path + '/');
   };
 
@@ -37,14 +35,14 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-[#121212]/10 shadow-sm">
       <nav className="max-w-[1560px] mx-auto px-6 md:px-10 h-16 grid grid-cols-3 items-center">
-        
+
         {/* Left: Mobile Menu Toggle / Desktop Links */}
         <div className="flex items-center justify-start">
-          <button 
-            onClick={() => setIsOpen(!isOpen)} 
+          <button
+            onClick={() => setIsOpen(!isOpen)}
             className={`md:hidden flex items-center justify-center p-2 -ml-2 rounded-sm transition-all duration-300 ${
-              isOpen 
-                ? 'text-[#FE5733] bg-[#FE5733]/10' 
+              isOpen
+                ? 'text-[#FE5733] bg-[#FE5733]/10'
                 : 'text-[#121212] hover:text-[#FE5733] hover:bg-[#FE5733]/5'
             }`}
             aria-label="Toggle Navigation Menu"
@@ -58,19 +56,12 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={`relative text-xs font-bold uppercase tracking-widest transition-all duration-300 py-2 px-3 rounded-sm group whitespace-nowrap ${
-                  isActive(link.href)
-                    ? 'text-[#FE5733]'
-                    : 'text-[#121212] hover:text-[#FE5733]'
+                  isActive(link.href) ? 'text-[#FE5733]' : 'text-[#121212] hover:text-[#FE5733]'
                 }`}
                 aria-label={`Navigate to ${link.label}`}
               >
                 {link.label}
-                {isActive(link.href) && (
-                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FE5733] transition-all duration-300 group-hover:w-full"></span>
-                )}
-                {!isActive(link.href) && (
-                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FE5733] transition-all duration-300 group-hover:w-full"></span>
-                )}
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FE5733] transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
           </div>
@@ -78,33 +69,24 @@ export default function Navbar() {
 
         {/* Center: Brand Logo */}
         <div className="flex items-center justify-center">
-          <Link 
-            href="/" 
-            className={`inline-block flex items-center justify-center transition-all duration-300 ${
-              isActive('/') 
-                ? 'opacity-80' 
-                : 'hover:opacity-80'
-            }`}
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center transition-all duration-300 hover:opacity-80"
             aria-label="Go to Home Page"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/logo.png" 
-              alt="The Style Zone Logo" 
-              className="h-7 md:h-8 w-auto object-contain transition-opacity duration-300"
-            />
+            <span className="text-sm font-black uppercase tracking-[0.15em] text-[#121212] font-display whitespace-nowrap">
+              THE <span className="text-[#FE5733]">STYLE</span> ZONE
+            </span>
           </Link>
         </div>
 
         {/* Right: Icons */}
         <div className="flex items-center justify-end gap-4">
-          <Link 
-            href="/wishlist" 
-            className={`relative group flex items-center p-2 -mr-2 md:mr-0 rounded-sm transition-all duration-300 ${
-              isActive('/wishlist') 
-                ? 'text-red-600 bg-red-50' 
-                : 'text-[#121212] hover:text-red-600'
-            }`} 
+          <Link
+            href="/wishlist"
+            className={`relative group flex items-center p-2 rounded-sm transition-all duration-300 ${
+              isActive('/wishlist') ? 'text-red-600 bg-red-50' : 'text-[#121212] hover:text-red-600'
+            }`}
             aria-label="View Wishlist"
           >
             <Heart className={`w-5 h-5 stroke-[2] transition-all duration-300 ${isActive('/wishlist') ? 'fill-current scale-110' : 'group-hover:scale-110'}`} />
@@ -117,10 +99,8 @@ export default function Navbar() {
 
           <button
             onClick={() => setIsCartOpen(true)}
-            className={`relative group flex items-center p-2 -mr-2 md:mr-0 rounded-sm transition-all duration-300 hidden md:flex ${
-              isCartOpen
-                ? 'text-red-600 bg-red-50'
-                : 'text-[#121212] hover:text-red-600'
+            className={`relative group items-center p-2 rounded-sm transition-all duration-300 hidden md:flex ${
+              isCartOpen ? 'text-[#FE5733] bg-[#FE5733]/10' : 'text-[#121212] hover:text-[#FE5733]'
             }`}
             aria-label="View Shopping Cart"
           >
@@ -136,13 +116,13 @@ export default function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-[#121212]/10 flex flex-col p-6 space-y-4 shadow-xl z-40 animate-fade-in">
+        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-[#121212]/10 flex flex-col p-6 space-y-4 shadow-xl z-40">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className={`relative text-sm font-bold uppercase tracking-widest transition-all duration-300 py-3 px-4 rounded-sm border-2 group whitespace-nowrap ${
+              className={`text-sm font-bold uppercase tracking-widest transition-all duration-300 py-3 px-4 rounded-sm border-2 whitespace-nowrap ${
                 isActive(link.href)
                   ? 'text-[#FE5733] border-[#FE5733] bg-[#FE5733]/5'
                   : 'text-[#121212] border-transparent hover:border-[#FE5733]/30 hover:bg-[#FE5733]/5'
@@ -150,12 +130,6 @@ export default function Navbar() {
               aria-label={`Navigate to ${link.label}`}
             >
               {link.label}
-              {isActive(link.href) && (
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FE5733] transition-all duration-300 group-hover:w-full"></span>
-              )}
-              {!isActive(link.href) && (
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FE5733] transition-all duration-300 group-hover:w-full"></span>
-              )}
             </Link>
           ))}
         </div>

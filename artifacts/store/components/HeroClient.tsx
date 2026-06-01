@@ -28,9 +28,10 @@ interface Product {
 
 interface HeroClientProps {
   featuredProducts: Product[];
+  allProducts: Product[];
 }
 
-export default function HeroClient({ featuredProducts }: HeroClientProps) {
+export default function HeroClient({ featuredProducts, allProducts }: HeroClientProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -225,10 +226,10 @@ export default function HeroClient({ featuredProducts }: HeroClientProps) {
         </div>
       </div>
 
-      <SearchOverlay 
-        isOpen={isSearchOpen} 
+      <SearchOverlay
+        isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        allProducts={featuredProducts}
+        allProducts={allProducts}
       />
     </section>
   );
