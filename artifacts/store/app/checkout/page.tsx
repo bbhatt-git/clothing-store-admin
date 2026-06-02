@@ -307,9 +307,9 @@ export default function CheckoutPage() {
             }
           }
           
-          // Add new order ID if not already in the list (use WooCommerce orderId)
-          if (data.orderId && !orderIds.includes(data.orderId)) {
-            orderIds.push(data.orderId);
+          // Add new order ID if not already in the list (use WooCommerce order_id)
+          if (data.order_id && !orderIds.includes(String(data.order_id))) {
+            orderIds.push(String(data.order_id));
             localStorage.setItem('sz_guest_orders', JSON.stringify(orderIds));
           }
         }
@@ -320,9 +320,9 @@ export default function CheckoutPage() {
         
         // Clear shopping bag and redirect!
         clearCart();
-        showModal('success', 'Order Placed Successfully!', `Your order ${data.orderNumber} has been confirmed. Thank you for shopping with us!`);
+        showModal('success', 'Order Placed Successfully!', `Your order ${data.order_number} has been confirmed. Thank you for shopping with us!`);
         setTimeout(() => {
-          router.push(`/checkout/success?order_id=${data.orderId}`);
+          router.push(`/checkout/success?order_id=${data.order_id}`);
         }, 2000);
       } else {
         setFormErrors({ submit: data.error || 'The server responded with an error. Please retry.' });
@@ -362,20 +362,22 @@ export default function CheckoutPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-10 flex-grow space-y-6">
         
         {/* Progress Tracker Stepper Header */}
-        <div className="bg-white border border-stone-200 rounded-[4px] p-4 flex justify-between items-center max-w-3xl mx-auto text-xs font-bold text-stone-400">
-          <div className={`flex items-center gap-1.5 ${step === 'address' ? 'text-[#FE5733]' : 'text-stone-650'}`}>
-            <span className="w-5 h-5 bg-[#FE5733]/10 text-[#FE5733] rounded-full flex items-center justify-center text-[10px] font-extrabold">1</span>
-            <span>Billing Address</span>
+        <div className="bg-white border border-stone-200 rounded-[4px] p-3 sm:p-4 flex justify-between items-center max-w-3xl mx-auto text-[10px] sm:text-xs font-bold text-stone-400">
+          <div className={`flex items-center gap-1 sm:gap-1.5 ${step === 'address' ? 'text-[#FE5733]' : 'text-stone-400'}`}>
+            <span className="w-5 h-5 bg-[#FE5733]/10 text-[#FE5733] rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+            <span className="whitespace-nowrap">
+              <span className="hidden sm:inline">Billing </span>Address
+            </span>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-300" />
-          <div className={`flex items-center gap-1.5 ${step === 'review' ? 'text-[#FE5733] animate-pulse' : ''}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${step === 'review' ? 'bg-[#FE5733]/10 text-[#FE5733]' : 'bg-stone-100 text-stone-400'}`}>2</span>
-            <span>Review Order</span>
+          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-stone-300 shrink-0" />
+          <div className={`flex items-center gap-1 sm:gap-1.5 ${step === 'review' ? 'text-[#FE5733] animate-pulse' : ''}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${step === 'review' ? 'bg-[#FE5733]/10 text-[#FE5733]' : 'bg-stone-100 text-stone-400'}`}>2</span>
+            <span className="whitespace-nowrap">Review</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-300" />
-          <div className={`flex items-center gap-1.5 ${step === 'payment' ? 'text-[#FE5733] animate-pulse' : ''}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${step === 'payment' ? 'bg-[#FE5733]/10 text-[#FE5733]' : 'bg-stone-100 text-stone-400'}`}>3</span>
-            <span>Payment</span>
+          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-stone-300 shrink-0" />
+          <div className={`flex items-center gap-1 sm:gap-1.5 ${step === 'payment' ? 'text-[#FE5733] animate-pulse' : ''}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${step === 'payment' ? 'bg-[#FE5733]/10 text-[#FE5733]' : 'bg-stone-100 text-stone-400'}`}>3</span>
+            <span className="whitespace-nowrap">Payment</span>
           </div>
         </div>
 

@@ -130,7 +130,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
 
   return (
     <div className="flex flex-col gap-12">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start bg-white p-6 md:p-10 rounded-[4px] border border-black/5 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start bg-white p-6 md:p-10 rounded-[4px] border border-black/5 shadow-sm">
         
         {/* Product Images Column */}
         <div className="lg:col-span-6 space-y-4">
@@ -172,7 +172,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
         <div className="lg:col-span-6 space-y-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#FE5733] mb-2">{product.brand}</p>
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-[#121212] font-display leading-tight">{product.name}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-[#121212] font-display leading-tight">{product.name}</h1>
 
             {product.rating_avg > 0 && (
               <div className="flex items-center gap-2 mt-3">

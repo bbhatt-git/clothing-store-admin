@@ -31,7 +31,7 @@ export default function AboutPage() {
             <p className="text-xs font-bold tracking-[0.3em] text-[#FE5733] uppercase mb-2 font-mono">
               THE STYLE ZONE • MAHENDRANAGAR
             </p>
-            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-[#121212] font-display leading-[1.1]">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-[#121212] font-display leading-[1.1]">
               Our Archival <span className="text-[#FE5733]">Story.</span>
             </h1>
             <p className="text-sm opacity-70 mt-4 leading-relaxed font-sans">

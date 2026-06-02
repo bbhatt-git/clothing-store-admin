@@ -62,7 +62,7 @@ export default function HeroClient({ featuredProducts, allProducts }: HeroClient
     <section className="w-full bg-[#F5F5F0]">
       <div className="max-w-[1560px] mx-auto px-6 md:px-10 py-12 md:py-20">
         
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-center gap-8 md:gap-12 lg:grid-cols-2">
           
           {/* Left Column - Text Content */}
           <header className="flex flex-col gap-8">
@@ -73,11 +73,11 @@ export default function HeroClient({ featuredProducts, allProducts }: HeroClient
               </span>
             </div>
 
-            <h1 className="text-5xl leading-tight font-bold text-balance md:text-6xl lg:text-7xl uppercase tracking-tighter text-[#121212] font-display">
+            <h1 className="text-4xl leading-tight font-bold text-balance sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-tight text-[#121212] font-display">
               Discover <span className="text-[#FE5733]">Style.</span>
             </h1>
 
-            <p className="text-[#121212]/60 max-w-lg text-xl text-balance leading-relaxed">
+            <p className="text-[#121212]/60 max-w-lg text-base sm:text-lg md:text-xl text-balance leading-relaxed">
               Explore our curated collection of premium garments. Each piece is handpicked for those who appreciate quality and timeless style.
             </p>
 
@@ -133,7 +133,7 @@ export default function HeroClient({ featuredProducts, allProducts }: HeroClient
           <div className="flex flex-col gap-4">
             {currentProduct && (
               <>
-                <div className="relative h-[500px] w-full overflow-hidden rounded-lg shadow-sm bg-white">
+                <div className="relative h-[320px] sm:h-[420px] md:h-[500px] w-full overflow-hidden rounded-lg shadow-sm bg-white">
                   
                   {/* Featured Product Display */}
                   <div className={`relative h-full transition-all duration-700 ease-out ${isAnimating ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>

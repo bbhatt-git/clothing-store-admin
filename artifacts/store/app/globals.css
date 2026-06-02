@@ -13,6 +13,23 @@ body {
   overflow-x: hidden;
 }
 
+/* Extra bottom padding on mobile to clear the fixed MobileDock */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* Float animation used by the 404 page */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
