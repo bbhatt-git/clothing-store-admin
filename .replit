@@ -11,6 +11,27 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/woo-admin: web"
+
+[[workflows.workflow]]
+name = "artifacts/woo-admin: web"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=20652 BASE_PATH=/admin pnpm --filter @workspace/woo-admin run dev"
+waitForPort = 20652
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -26,6 +47,10 @@ externalPort = 80
 [[ports]]
 localPort = 8081
 externalPort = 8081
+
+[[ports]]
+localPort = 20652
+externalPort = 3002
 
 [[ports]]
 localPort = 24964

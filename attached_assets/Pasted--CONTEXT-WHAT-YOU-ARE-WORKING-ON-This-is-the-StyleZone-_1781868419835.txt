@@ -1,0 +1,630 @@
+## CONTEXT & WHAT YOU ARE WORKING ON
+
+This is the **StyleZone Admin Dashboard** — a WooCommerce admin panel for a clothing store.
+
+**Repo:** `https://github.com/bbhatt-git/clothing-store-admin`
+
+Current stack (READ CAREFULLY — this shapes every decision below):
+- pnpm workspaces, Node 24, TypeScript 5.9
+- **Frontend: React + Vite** (`artifacts/woo-admin/`) — wouter, TanStack Query, Recharts, shadcn/ui, next-themes
+- **API: Express 5** (`artifacts/api-server/`) — WooCommerce REST API SDK, JWT auth
+- Styling: Tailwind CSS, dark-first (charcoal/near-black + orange accent), no emojis
+- Build: esbuild, Orval codegen from OpenAPI spec
+
+**Problem:** The store frontend was partially Next.js and the admin is Vite — they are split. Deployment to Vercel or Cloudflare fails or produces partial results.
+
+---
+
+## GOAL — DO ALL OF THIS IN ONE SHOT
+
+### 1. FULL NEXT.JS MIGRATION (NO VITE LEFT ANYWHERE)
+
+Convert the **entire** project to a single **Next.js 14 App Router** application. The Express API server (`artifacts/api-server/`) must be replaced with **Next.js API routes** (`/app/api/...`). Do not leave Vite anywhere in the project.
+
+**New project structure after migration:**
+
+```
+/
+├── app/
+│   ├── layout.tsx                  # Root layout with fonts, ThemeProvider, Toaster
+│   ├── globals.css
+│   ├── (auth)/
+│   │   └── login/
+│   │       └── page.tsx
+│   ├── (dashboard)/
+│   │   ├── layout.tsx              # Sidebar + header shell
+│   │   ├── page.tsx                # Dashboard / overview
+│   │   ├── products/
+│   │   │   ├── page.tsx            # Products list
+│   │   │   ├── new/page.tsx        # Create product
+│   │   │   ├── [id]/page.tsx       # Edit product
+│   │   │   └── import-export/
+│   │   │       └── page.tsx        # Bulk import/export page
+│   │   ├── orders/
+│   │   │   ├── page.tsx
+│   │   │   └── [id]/page.tsx
+│   │   ├── categories/
+│   │   │   └── page.tsx
+│   │   ├── reviews/
+│   │   │   └── page.tsx
+│   │   └── coupons/
+│   │       └── page.tsx
+│   └── api/
+│       ├── auth/
+│       │   ├── login/route.ts
+│       │   └── me/route.ts
+│       ├── products/
+│       │   ├── route.ts            # GET list, POST create
+│       │   ├── [id]/route.ts       # GET one, PUT, DELETE
+│       │   ├── import/route.ts     # POST bulk import
+│       │   └── export/route.ts     # GET export (CSV/JSON)
+│       ├── orders/
+│       │   ├── route.ts
+│       │   └── [id]/route.ts
+│       ├── categories/
+│       │   ├── route.ts
+│       │   └── [id]/route.ts
+│       ├── reviews/
+│       │   ├── route.ts
+│       │   └── [id]/route.ts
+│       ├── coupons/
+│       │   ├── route.ts
+│       │   └── [id]/route.ts
+│       ├── reports/
+│       │   └── sales/route.ts
+│       └── media/
+│           └── upload/route.ts
+├── components/
+│   ├── ui/                         # shadcn/ui components
+│   ├── layout/
+│   │   ├── sidebar.tsx
+│   │   ├── header.tsx
+│   │   └── page-header.tsx
+│   ├── states/
+│   │   ├── loading-skeleton.tsx    # Skeleton variants
+│   │   ├── empty-state.tsx         # Empty state component
+│   │   └── error-state.tsx         # Error state component
+│   ├── products/
+│   │   ├── product-table.tsx
+│   │   ├── product-form.tsx
+│   │   ├── variant-editor.tsx
+│   │   ├── bulk-import-dialog.tsx
+│   │   └── bulk-export-dialog.tsx
+│   ├── orders/
+│   ├── categories/
+│   ├── reviews/
+│   └── coupons/
+├── lib/
+│   ├── woo.ts                      # WooCommerce SDK singleton (server-only)
+│   ├── auth.ts                     # JWT helpers (server-only)
+│   ├── csv-utils.ts                # CSV parse/serialize utilities
+│   └── api-client.ts               # Client-side fetch wrapper
+├── hooks/
+│   ├── use-products.ts
+│   ├── use-orders.ts
+│   ├── use-categories.ts
+│   ├── use-reviews.ts
+│   └── use-coupons.ts
+├── types/
+│   └── index.ts                    # All shared types (migrated from Zod schemas)
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+**Rules for the API routes migration:**
+- All WooCommerce consumer key/secret stay server-side only — never in the client bundle
+- Auth: JWT issued by `/api/auth/login`, validated in every protected route via middleware (use Next.js `middleware.ts`)
+- JWT stored in `httpOnly` cookies (not localStorage — this is a security fix)
+- Use `next/headers` cookies() for server-side JWT reads
+- Every API route must handle errors and return proper HTTP status codes with a `{ error: string }` body
+
+---
+
+### 2. FONT SYSTEM — REPLACE ALL EXISTING FONTS
+
+Use **`next/font/google`** in `app/layout.tsx`. Apply these three font families:
+
+```typescript
+import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from 'next/font/google'
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+  weight: ['400', '500'],
+  display: 'swap',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+})
+```
+
+**Apply fonts like this in `globals.css`:**
+
+```css
+:root {
+  --font-display: var(--font-jakarta);   /* Plus Jakarta Sans */
+  --font-body: var(--font-inter);        /* Inter */
+  --font-mono: var(--font-jb-mono);      /* JetBrains Mono */
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6,
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+code, kbd, pre,
+.font-mono,
+.sku, .order-id, .price-value, .stock-count {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+```
+
+**Specific usage rules:**
+- Sidebar nav item labels: Plus Jakarta Sans 500, 13px
+- Page titles (H1): Plus Jakarta Sans 700, 24px
+- Section headings (H2/H3): Plus Jakarta Sans 600, 18px/16px
+- Body text, descriptions, labels: Inter 400, 14px
+- Table header text: Inter 500, 12px, letter-spacing 0.05em, uppercase
+- Table cell data text: Inter 400, 14px
+- Price fields, SKU fields, order IDs, stock numbers: JetBrains Mono 400, 13px
+- Badge text: Inter 500, 11px
+- Button text: Plus Jakarta Sans 500, 14px
+
+---
+
+### 3. DESIGN SYSTEM — SPACING, SIZING, AND VISUAL POLISH
+
+Apply these values **consistently everywhere** — not just some components:
+
+**Spacing grid (8px base):**
+- Sidebar width: 256px fixed
+- Sidebar padding: 16px horizontal, 8px vertical per nav item
+- Page content padding: 32px (desktop), 20px (mobile)
+- Card padding: 24px
+- Section gap between page regions: 24px
+- Table cell padding: 12px vertical × 16px horizontal
+- Form field gap: 16px
+- Input inner padding: 10px horizontal, 8px vertical
+- Button padding: 10px horizontal × 8px vertical (small), 16px × 10px (default), 20px × 12px (large)
+- Modal padding: 24px
+
+**Border radii:**
+- Cards and panels: 10px
+- Buttons: 7px
+- Inputs: 7px
+- Badges/tags: 5px
+- Skeleton shimmer blocks: 6px
+- Modals: 12px
+
+**Color tokens (dark theme, charcoal/orange):**
+```css
+--bg-base: #0f0f11;
+--bg-panel: #18181b;
+--bg-elevated: #1f1f23;
+--bg-hover: #26262c;
+--border: #2e2e34;
+--border-subtle: #232328;
+--text-primary: #f4f4f5;
+--text-secondary: #a1a1aa;
+--text-muted: #71717a;
+--accent: #f97316;          /* orange-500 */
+--accent-hover: #ea6c08;
+--accent-muted: #431407;
+--success: #22c55e;
+--success-muted: #052e16;
+--error: #ef4444;
+--error-muted: #2d0a0a;
+--warning: #f59e0b;
+--warning-muted: #291609;
+```
+
+**Sidebar design:**
+- Background: `--bg-panel`
+- Nav items: 40px height, 8px gap, 8px border-radius, 12px left padding
+- Active item: `--accent-muted` background, `--accent` text/icon color, 3px left border in `--accent`
+- Hover: `--bg-hover` background
+- Section dividers with small uppercase labels (12px, `--text-muted`)
+- Logo area: 64px height, borderBottom `--border-subtle`
+- Bottom section: user avatar + name + logout button pinned to bottom
+
+**Table design:**
+- Header row: `--bg-elevated`, `--text-muted` uppercase label style
+- Row hover: `--bg-hover`
+- Row border: 1px solid `--border-subtle`
+- Sticky header on scroll
+- Column widths: set explicitly so they don't jiggle on data load
+- Checkbox column: 48px
+- Image column: 60px (show product thumbnail 40×40 with border-radius 6px)
+
+---
+
+### 4. STATES — IMPLEMENT ALL FOUR EVERYWHERE, NO EXCEPTIONS
+
+Every page and every data-fetching component must handle all four states properly.
+
+#### LOADING STATE
+Use **skeleton screens** (not spinners alone). Create `components/states/loading-skeleton.tsx`:
+
+```tsx
+// Variants needed:
+// <TableSkeleton rows={8} columns={6} />  — for all table views
+// <CardSkeleton />                         — for dashboard metric cards
+// <FormSkeleton fields={6} />             — for product/order edit forms
+// <ChartSkeleton />                        — for dashboard sales chart
+// <DetailSkeleton />                       — for order/product detail panels
+```
+
+Skeleton animation: subtle shimmer (CSS animation from `--bg-elevated` to `--bg-hover`). Skeletons must match the exact layout of the real content so there is zero layout shift when data arrives.
+
+#### EMPTY STATE
+Create `components/states/empty-state.tsx` with this interface:
+
+```tsx
+interface EmptyStateProps {
+  icon: React.ReactNode        // Lucide icon component
+  title: string
+  description: string
+  action?: {
+    label: string
+    href?: string
+    onClick?: () => void
+  }
+  secondaryAction?: {
+    label: string
+    href?: string
+    onClick?: () => void
+  }
+}
+```
+
+Examples of empty states to add on every list page:
+- **Products empty**: icon=`Package`, title="No products yet", description="Add your first product to get started selling.", action="Add Product", secondaryAction="Import from CSV"
+- **Orders empty**: icon=`ShoppingBag`, title="No orders yet", description="Orders will appear here once customers start purchasing."
+- **Categories empty**: icon=`Folder`, title="No categories", description="Organize your products into categories.", action="Create Category"
+- **Reviews empty**: icon=`Star`, title="No reviews", description="Customer reviews will appear here."
+- **Coupons empty**: icon=`Tag`, title="No coupons", description="Create discount coupons for your customers.", action="Create Coupon"
+- **Search no results**: icon=`SearchX`, title="No results for "{query}"", description="Try different keywords or check your spelling."
+
+#### ERROR STATE
+Create `components/states/error-state.tsx`:
+
+```tsx
+interface ErrorStateProps {
+  title?: string                    // defaults to "Something went wrong"
+  description?: string              // defaults to error message
+  onRetry?: () => void             // show "Try again" button if provided
+  compact?: boolean                // inline vs full-page
+}
+```
+
+- Full-page error: centered, icon=`AlertCircle` in error color, title, description, retry button
+- Inline/table error: horizontal layout inside the table area, same retry affordance
+- Network error specifically: show "Check your internet connection"
+- 401 errors: redirect to login
+- 404 errors: "Not found" with back button
+- 500 errors: "Server error. Try again in a moment."
+
+Add a top-level **error boundary** in `(dashboard)/layout.tsx` that catches any unhandled React errors and shows the error state instead of a white screen.
+
+#### SUCCESS STATE
+- Use **toast notifications** via `sonner` (install if not present). Configure in `app/layout.tsx`.
+- Every mutating action (create, update, delete, import, export) must show a toast on success and a toast on error.
+- Toast config: position `bottom-right`, duration 4000ms, rich colors enabled
+- Success toasts: `toast.success("Product saved", { description: "Changes are now live in your store." })`
+- Error toasts: `toast.error("Failed to save product", { description: error.message })`
+- Import success: `toast.success("Import complete", { description: \`${count} products imported successfully.\` })`
+- Delete confirmation: use an **AlertDialog** (radix/shadcn) modal — never `window.confirm()`
+
+---
+
+### 5. BULK PRODUCT IMPORT / EXPORT
+
+Add a dedicated page at `/products/import-export` accessible from the Products page header via an "Import / Export" button.
+
+#### IMPORT — CSV Upload
+
+**CSV column spec (create a downloadable template):**
+```
+id (optional, if provided = update existing),name,sku,description,short_description,
+regular_price,sale_price,status,stock_quantity,manage_stock,stock_status,
+categories (comma-separated slugs),tags (comma-separated),images (comma-separated URLs),
+weight,length,width,height,attributes (JSON string)
+```
+
+**Import flow UI:**
+1. Upload zone (drag-and-drop + click-to-browse, accepts `.csv` only)
+2. After file selected: parse CSV client-side, show **preview table** of first 5 rows with column mapping
+3. Column mapping step: dropdowns to map CSV columns → product fields (in case column names differ)
+4. Validation step: show a count of valid rows, list of rows with errors (row number + what's wrong), and let user choose: skip errors or abort
+5. "Start Import" button → progress bar with live count (e.g. "Importing 34 / 150 products...")
+6. When done: summary toast + downloadable error report CSV if any rows failed
+
+**API route (`/api/products/import`):**
+- Accept multipart/form-data with the CSV file
+- Process in batches of 20 (configurable)
+- For each row: validate required fields → call WooCommerce REST API
+- Return a streaming response or polling endpoint for progress
+- Return a final summary: `{ success: number, failed: number, errors: Array<{row, error}> }`
+
+#### EXPORT — CSV / JSON
+
+**Export flow UI:**
+1. "Export Products" button opens a dialog
+2. Options:
+   - **Format**: CSV or JSON
+   - **Filter**: All products / By category / By status (published, draft, out of stock)
+   - **Columns to include**: checklist of all available fields (preselected: name, SKU, price, stock, status)
+   - **Include variations**: toggle (creates child rows for variable products)
+3. "Export" button → spinner → downloads file automatically
+4. File name: `stylezone-products-{YYYY-MM-DD}.csv`
+
+**API route (`/api/products/export`):**
+- Accept query params: `format`, `category`, `status`, `fields`, `include_variations`
+- Fetch all matching products from WooCommerce (paginate through all pages)
+- Serialize to CSV or JSON
+- Return as file download with correct Content-Disposition headers
+
+---
+
+### 6. SEO — METADATA FOR ALL PAGES
+
+Since this is an admin dashboard (authenticated, not public), use `noindex` on all pages. Still implement proper metadata for tab titles and OG fallbacks.
+
+In `app/layout.tsx`:
+```typescript
+export const metadata: Metadata = {
+  title: {
+    template: '%s | StyleZone Admin',
+    default: 'StyleZone Admin',
+  },
+  description: 'StyleZone clothing store admin dashboard',
+  robots: { index: false, follow: false },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
+}
+```
+
+Each page exports its own metadata:
+```typescript
+// products/page.tsx
+export const metadata: Metadata = { title: 'Products' }
+// orders/page.tsx
+export const metadata: Metadata = { title: 'Orders' }
+// etc.
+```
+
+Add a `public/` directory with:
+- `favicon.ico` — simple orange "S" letter favicon (32×32)
+- `apple-icon.png` — 180×180
+- `manifest.json` — PWA manifest for add-to-homescreen support
+- `robots.txt` — `User-agent: * / Disallow: /`
+
+---
+
+### 7. UI INCONSISTENCIES TO FIX
+
+Fix all of these precisely:
+
+- **Loading flicker**: any component that renders empty/null for even 1 frame before data loads must be replaced with its skeleton variant
+- **Table pagination**: must show "Showing X–Y of Z results" text, working prev/next buttons, page size selector (10/25/50/100), and the pagination must not reset scroll position
+- **Form inputs**: all inputs must have consistent 36px height, visible focus ring in `--accent` color, proper `name` attribute for accessibility
+- **Button hierarchy**: only one primary (orange fill) button per toolbar. Secondary actions use ghost or outline variant. Destructive actions (delete) use `variant="destructive"` (red)
+- **Status badges**: use consistent pill shape (border-radius 9999px), 6px horizontal padding, 4px vertical. Colors:
+  - published/active/approved/completed → green
+  - draft/pending/on-hold → yellow/amber
+  - trash/cancelled/rejected → red
+  - processing → blue/indigo
+- **Dropdown menus**: row action menus (edit, delete, etc.) must use a `DropdownMenu` trigger, not bare buttons spread across the row
+- **Mobile responsiveness**: sidebar must collapse to a drawer on screens < 768px. Use `Sheet` from shadcn for the mobile sidebar. Page titles must truncate on small screens.
+- **Search bars**: all search inputs must debounce (300ms) so they don't trigger an API call on every keystroke
+- **Number formatting**: all prices must show with currency symbol (format: `$1,234.00`). Stock numbers use `toLocaleString()`. Order IDs formatted as `#12345`.
+- **Date formatting**: consistent across the app — use `Intl.DateTimeFormat` with the locale-aware format: `Jun 19, 2026` (not ISO strings in the UI)
+- **Confirm delete**: all delete actions must show a confirmation dialog with the item name clearly stated. Never inline delete without confirmation.
+- **Toast stacking**: max 3 toasts visible at once, newest on top
+
+---
+
+### 8. DASHBOARD PAGE IMPROVEMENTS
+
+The dashboard overview page must include:
+- **Metric cards** (4 in a row): Today's Revenue, Total Orders, Active Products, Low Stock Alerts — each with: metric value, % change vs last period, trend icon (↑ green / ↓ red), skeleton while loading
+- **Sales chart**: Recharts `AreaChart`, 30-day rolling window, gradient fill in `--accent` color at 20% opacity, proper axis labels, responsive container
+- **Recent orders table**: last 10 orders, columns: Order ID, Customer, Date, Status badge, Total. Click row → navigate to order detail
+- **Low stock alert table**: products with stock ≤ 5, columns: Product, SKU, Stock (in mono red if 0). Click → edit product
+
+---
+
+### 9. VERCEL / CLOUDFLARE DEPLOYMENT READINESS
+
+In `next.config.ts`:
+```typescript
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  experimental: {
+    // No edge runtime — use Node.js runtime for WooCommerce SDK compatibility
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.wp.com' },
+      { protocol: 'https', hostname: '**.woocommerce.com' },
+      { protocol: 'http', hostname: 'localhost' },
+    ],
+  },
+  // Required if you want Cloudflare Pages (edge) — remove if Vercel only
+  // output: 'standalone',
+}
+
+export default nextConfig
+```
+
+Add a `vercel.json`:
+```json
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "pnpm install"
+}
+```
+
+Add a `.env.example`:
+```
+# WooCommerce
+WC_BASE_URL=https://yourstore.com
+WC_CONSUMER_KEY=ck_xxxx
+WC_CONSUMER_SECRET=cs_xxxx
+WP_APP_PASSWORD=xxxx
+
+# Auth
+JWT_SECRET=your-super-secret-key-min-32-chars
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-admin-password
+
+# Next.js
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+**Environment variable rules:**
+- `WC_BASE_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `WP_APP_PASSWORD` → server-only (no `NEXT_PUBLIC_` prefix)
+- `NEXT_PUBLIC_APP_URL` → safe to expose to client
+
+---
+
+### 10. ADDITIONAL BUG FIXES
+
+- Fix JWT auth: move from `localStorage` to `httpOnly` cookie. Update the auth context to use cookies instead.
+- Add `middleware.ts` to protect all `/` routes (redirect unauthenticated to `/login`)
+- Fix the WooCommerce sales chart: wrap in try/catch and show an empty state if WooCommerce Analytics is disabled (currently it crashes the whole dashboard)
+- Fix media upload: properly handle the case where `WP_APP_PASSWORD` is not set — show a friendly error message in the UI instead of a silent 500
+- Remove all `console.log` debug statements from production code
+- Add `React.Suspense` boundaries around every route segment with appropriate skeleton fallbacks
+- Ensure all forms have `preventDefault` on submit and never cause full page reloads
+- Add `aria-label` to all icon-only buttons
+- Fix table sorting: column sort indicators must show current sort direction (↑ or ↓), and clicking the same column again must toggle direction
+- Products search: fix to search across name AND SKU, not just name
+
+---
+
+### 11. PACKAGES TO INSTALL / UPDATE
+
+```bash
+# Core
+next@14.2.x
+react@18
+react-dom@18
+typescript
+
+# Auth & Security
+jose                           # JWT (replaces jsonwebtoken, works in edge/Node both)
+
+# UI
+@radix-ui/react-alert-dialog
+sonner                         # Toast notifications
+lucide-react
+
+# Data fetching
+@tanstack/react-query@5
+
+# CSV / Import-Export
+papaparse                      # CSV parsing (client-side)
+@types/papaparse
+
+# Date formatting
+date-fns                       # or use native Intl (prefer native if possible)
+
+# Charts
+recharts
+
+# Fonts
+# (handled via next/font/google — no npm install needed)
+```
+
+Remove from dependencies:
+- `vite` and all `@vitejs/*` packages
+- `wouter` (replaced by Next.js routing)
+- `express` and all Express middleware
+- `esbuild` build scripts specific to the old Vite setup
+
+---
+
+### 12. QUALITY CHECKLIST (verify before done)
+
+Run through this list and fix anything that fails:
+
+- [ ] `next build` exits with code 0 — zero TypeScript errors, zero build errors
+- [ ] `next lint` exits with code 0
+- [ ] `/login` is accessible without auth. Every other route redirects to `/login` if unauthenticated
+- [ ] After login, JWT cookie is set (httpOnly, Secure in production, SameSite=Lax)
+- [ ] Logout clears the cookie and redirects to `/login`
+- [ ] Every page shows a skeleton while data is loading
+- [ ] Every list page shows an empty state when there are zero results
+- [ ] Every error (network, 4xx, 5xx) shows an error state with retry — no unhandled promise rejections
+- [ ] Every mutating action (create, update, delete, import) shows a success or error toast
+- [ ] Delete actions show an AlertDialog confirmation before executing
+- [ ] The bulk import flow handles: valid CSV, invalid CSV, partial failures gracefully
+- [ ] The bulk export downloads a properly formatted CSV file
+- [ ] Fonts load via `next/font` — no layout shift, no flash of unstyled text
+- [ ] Sidebar collapses on mobile (< 768px) into a drawer
+- [ ] The dashboard page sales chart shows an empty state (not a crash) if WooCommerce Analytics is disabled
+- [ ] `vercel.json` is present and correct
+- [ ] `.env.example` documents all required environment variables
+- [ ] No WooCommerce credentials appear in client-side code or network responses
+- [ ] No `window.confirm()` calls — all confirmations use AlertDialog
+- [ ] All icon-only buttons have `aria-label`
+- [ ] Page `<title>` tags follow the template: "Products | StyleZone Admin"
+
+---
+
+## DO NOT
+
+- Do not use Vite anywhere
+- Do not use `wouter` — use Next.js App Router navigation
+- Do not store JWT in `localStorage` — use httpOnly cookies only
+- Do not use `window.confirm()` for delete confirmations
+- Do not leave `console.log` debug statements
+- Do not use spinners as the sole loading state — use skeleton screens
+- Do not use emoji in the UI (per the original design spec)
+- Do not use the `pages/` directory — use App Router (`app/`) exclusively
+- Do not skip TypeScript types — no `any` unless absolutely unavoidable and commented
+- Do not mix `px` and Tailwind spacing utilities — use Tailwind classes consistently
+
+---
+
+## FINAL NOTE FOR THE AGENT
+
+Work through the codebase systematically. The migration order should be:
+
+1. Bootstrap the Next.js app structure (`next.config.ts`, `tsconfig.json`, `package.json`, `app/layout.tsx`)
+2. Migrate API routes from Express → Next.js Route Handlers (`app/api/...`)
+3. Set up auth middleware (`middleware.ts`) and auth context
+4. Migrate each page one by one (login → dashboard → products → orders → categories → reviews → coupons)
+5. Build the shared state components (skeleton, empty, error)
+6. Apply the design system tokens globally
+7. Implement fonts via `next/font`
+8. Build the bulk import/export feature
+9. Run `next build` and fix every error until it exits cleanly
+10. Final pass: quality checklist above
