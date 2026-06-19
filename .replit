@@ -9,6 +9,7 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
+runButton = "Project"
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -17,28 +18,3 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
-
-[[ports]]
-localPort = 3001
-externalPort = 3002
-
-[[ports]]
-localPort = 8080
-externalPort = 80
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
-
-[[ports]]
-localPort = 20652
-externalPort = 3000
-
-[userenv]
-
-[userenv.shared]
-WOOCOMMERCE_URL = "https://dev-bbhatt.pantheonsite.io/"
-WOOCOMMERCE_CONSUMER_KEY = "ck_60a35bccce0c9f422740af077c58bdd783a100f9"
-WOOCOMMERCE_CONSUMER_SECRET = "cs_976af55670d7a9ca4ade1477f3c457e21a7657d3"
-ADMIN_USERNAME = "tsz"
-ADMIN_PASSWORD = "tsz"
