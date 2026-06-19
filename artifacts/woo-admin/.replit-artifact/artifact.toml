@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/admin"
+title = "StyleZone Admin Dashboard"
+version = "1.0.0"
+id = "artifacts/woo-admin"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/admin" ]
+localPort = 20652
+
+[services.development]
+run = "pnpm --filter @workspace/woo-admin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/woo-admin", "run", "build" ]
+publicDir = "artifacts/woo-admin/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/admin/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20652"
+BASE_PATH = "/admin"
