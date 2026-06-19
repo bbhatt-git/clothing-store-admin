@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "artifacts/woo-admin: web"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/store: web"
+
 [[workflows.workflow]]
 name = "artifacts/woo-admin: web"
 author = "agent"
@@ -32,6 +36,14 @@ task = "shell.exec"
 args = "PORT=20652 BASE_PATH=/admin pnpm --filter @workspace/woo-admin run dev"
 waitForPort = 20652
 
+[[workflows.workflow]]
+name = "artifacts/store: web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3001 pnpm --filter @workspace/store run dev"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -39,6 +51,14 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 3000
+externalPort = 3001
+
+[[ports]]
+localPort = 3001
+externalPort = 3003
 
 [[ports]]
 localPort = 8080

@@ -1,6 +1,6 @@
 kind = "web"
-previewPath = "/admin"
-title = "StyleZone Admin Dashboard"
+previewPath = "/woo-admin-legacy"
+title = "StyleZone Admin (Legacy Vite)"
 version = "1.0.0"
 id = "artifacts/woo-admin"
 router = "path"
@@ -11,7 +11,7 @@ version = "1.0.0"
 
 [[services]]
 name = "web"
-paths = [ "/admin" ]
+paths = [ "/woo-admin-legacy" ]
 localPort = 20652
 
 [services.development]
@@ -23,9 +23,9 @@ publicDir = "artifacts/woo-admin/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]
-from = "/admin/*"
+from = "/woo-admin-legacy/*"
 to = "/index.html"
 
 [services.env]
 PORT = "20652"
-BASE_PATH = "/admin"
+BASE_PATH = "/woo-admin-legacy"
