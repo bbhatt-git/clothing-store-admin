@@ -1,6 +1,3 @@
-const WOO_URL = (process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
-const CK = process.env.WOOCOMMERCE_CONSUMER_KEY || "";
-const CS = process.env.WOOCOMMERCE_CONSUMER_SECRET || "";
 
 export interface WooProduct {
   id: number;
@@ -53,12 +50,15 @@ export interface WooCategory {
 }
 
 async function wooFetch(endpoint: string, params: Record<string, string | number | boolean> = {}): Promise<unknown> {
-  if (!WOO_URL || !CK || !CS) {
+  const wooUrl = (process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
+  const ck = process.env.WOOCOMMERCE_CONSUMER_KEY || "";
+  const cs = process.env.WOOCOMMERCE_CONSUMER_SECRET || "";
+  if (!wooUrl || !ck || !cs) {
     throw new Error("WooCommerce credentials not configured");
   }
-  const url = new URL(`${WOO_URL}/wp-json/wc/v3/${endpoint}`);
+  const url = new URL(`${wooUrl}/wp-json/wc/v3/${endpoint}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
-  const auth = Buffer.from(`${CK}:${CS}`).toString("base64");
+  const auth = Buffer.from(`${ck}:${cs}`).toString("base64");
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Basic ${auth}` },
     next: { revalidate: 60 },

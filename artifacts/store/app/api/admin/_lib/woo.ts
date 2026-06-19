@@ -1,9 +1,11 @@
-export const WOO_URL = (process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
-const CK = process.env.WOOCOMMERCE_CONSUMER_KEY || "";
-const CS = process.env.WOOCOMMERCE_CONSUMER_SECRET || "";
+export function getWooUrl(): string {
+  return (process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
+}
 
 export function wooAuth(): string {
-  return `Basic ${Buffer.from(`${CK}:${CS}`).toString("base64")}`;
+  const ck = process.env.WOOCOMMERCE_CONSUMER_KEY || "";
+  const cs = process.env.WOOCOMMERCE_CONSUMER_SECRET || "";
+  return `Basic ${Buffer.from(`${ck}:${cs}`).toString("base64")}`;
 }
 
 export function wooHeaders(): HeadersInit {
@@ -11,7 +13,7 @@ export function wooHeaders(): HeadersInit {
 }
 
 export async function wooFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${WOO_URL}/wp-json/wc/v3/${path}`, {
+  const res = await fetch(`${getWooUrl()}/wp-json/wc/v3/${path}`, {
     ...options,
     headers: { ...wooHeaders(), ...options?.headers },
     cache: "no-store",
