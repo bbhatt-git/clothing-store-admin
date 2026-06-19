@@ -1,11 +1,22 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || "stylezone-admin-secret-dev-only"
-);
+function getSecret(): Uint8Array {
+  const s = process.env.ADMIN_JWT_SECRET;
+  if (!s) throw new Error("Missing required environment variable: ADMIN_JWT_SECRET");
+  return new TextEncoder().encode(s);
+}
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+function getAdminUsername(): string {
+  const u = process.env.ADMIN_USERNAME;
+  if (!u) throw new Error("Missing required environment variable: ADMIN_USERNAME");
+  return u;
+}
+
+function getAdminPassword(): string {
+  const p = process.env.ADMIN_PASSWORD;
+  if (!p) throw new Error("Missing required environment variable: ADMIN_PASSWORD");
+  return p;
+}
 
 export interface AdminPayload {
   username: string;
@@ -13,7 +24,7 @@ export interface AdminPayload {
 }
 
 export function validateCredentials(username: string, password: string) {
-  return username === ADMIN_USERNAME && password === ADMIN_PASSWORD;
+  return username === getAdminUsername() && password === getAdminPassword();
 }
 
 export async function signToken(payload: AdminPayload): Promise<string> {
@@ -21,12 +32,12 @@ export async function signToken(payload: AdminPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .setIssuedAt()
-    .sign(SECRET);
+    .sign(getSecret());
 }
 
 export async function verifyToken(token: string): Promise<AdminPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     return { username: payload.username as string, email: payload.email as string | null };
   } catch {
     return null;

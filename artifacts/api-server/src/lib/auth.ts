@@ -1,9 +1,15 @@
 import jwt from "jsonwebtoken";
 import { logger } from "./logger";
 
-const JWT_SECRET = process.env.SESSION_SECRET ?? "fallback-dev-secret-change-me";
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin";
+function requireEnv(name: string): string {
+  const val = process.env[name];
+  if (!val) throw new Error(`Missing required environment variable: ${name}`);
+  return val;
+}
+
+const JWT_SECRET = requireEnv("SESSION_SECRET");
+const ADMIN_USERNAME = requireEnv("ADMIN_USERNAME");
+const ADMIN_PASSWORD = requireEnv("ADMIN_PASSWORD");
 
 export interface AdminPayload {
   username: string;
